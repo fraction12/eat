@@ -1,69 +1,90 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
-
 export const runtime = "nodejs";
 import { Buffer } from "buffer";
 import heicConvert from "heic-convert";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
 export async function POST(req: Request) {
-  const { imageUrl } = await req.json();    // base-64 string
-
-  // Detect HEIC/HEIF data‑URLs and convert to JPEG
-  const [meta, base64] = imageUrl.split(",");
-  const mimeMatch = /^data:(.*);base64$/.exec(meta);
-  const mime = mimeMatch?.[1] ?? "";
-
-  let jpegDataUrl = imageUrl; // default
-
-  if (mime === "image/heic" || mime === "image/heif") {
-    const buf = Buffer.from(base64, "base64");
-    // Convert Node.js Buffer to ArrayBuffer for heic-convert
-    const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-    const jpegArrayBuffer = await heicConvert({
-      buffer: arrayBuffer,
-      format: "JPEG",
-      quality: 0.85,
-    });
-    // Convert back to Node.js Buffer to base64-encode
-    const jpegBuf = Buffer.from(jpegArrayBuffer);
-    jpegDataUrl = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
-  }
-
-  const gpt = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL_ID || "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: "Return ONLY valid JSON — no markdown, no explanations."
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text",
-            text: "This is a grocery receipt. Extract every line‑item with its price and return an array of objects with keys `item` and `price`, like:\n[{\"item\":\"Milk\",\"price\":2.99},{\"item\":\"Eggs\",\"price\":3.50}]" },
-          { type: "image_url", image_url: { url: jpegDataUrl } }
-        ]
-      }
-    ]
-  });
-
-  const raw = gpt.choices[0].message.content ?? "[]";
-  let parsed: any;
   try {
-    parsed = JSON.parse(raw);
-  } catch {
-    parsed = [];
+    const { imageUrl } = await req.json();
+
+    // Detect HEIC/HEIF data-URLs and convert to JPEG
+    const [meta, base64] = imageUrl.split(",");
+    const mimeMatch = /^data:(.*);base64$/.exec(meta);
+    const mime = mimeMatch?.[1] ?? "";
+
+    let jpegDataUrl = imageUrl;
+    if (mime === "image/heic" || mime === "image/heif") {
+      const buf = Buffer.from(base64, "base64");
+      const uint8Array = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+      const jpegArrayBuffer = await heicConvert({
+        buffer: uint8Array,
+        format: "JPEG",
+        quality: 0.85,
+      });
+      const jpegBuf = Buffer.from(jpegArrayBuffer);
+      jpegDataUrl = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
+    }
+
+    // Call OpenAI REST API directly
+    const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL_ID || "gpt-4o",
+        messages: [
+          { role: "system", content: "Return ONLY valid JSON — no markdown, no explanations." },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "This is a grocery receipt. Extract every line-item with its price and return an array of objects with keys `item` and `price`, like:[{\"item\":\"Milk\",\"price\":2.99},{\"item\":\"Eggs\",\"price\":3.50}]"
+              },
+              { type: "image_url", image_url: { url: jpegDataUrl } }
+            ]
+          }
+        ]
+      }),
+    });
+
+    if (!apiRes.ok) {
+      const errText = await apiRes.text();
+      throw new Error(`OpenAI API error ${apiRes.status}: ${errText}`);
+    }
+
+    const apiJson = await apiRes.json();
+    let raw = apiJson.choices?.[0]?.message?.content ?? "[]";
+    // Strip code fences if present (``` or ```json)
+    let rawContent = raw.trim();
+    if (rawContent.startsWith("```")) {
+      rawContent = rawContent.replace(/^```(?:json)?\s*/, '').replace(/```$/,'').trim();
+    }
+    let parsed: any;
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch {
+      parsed = [];
+    }
+
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.items)
+        ? parsed.items
+        : [];
+
+    console.error("🚧 scan raw response:", raw);
+    console.error("🚧 parsed items:", items);
+
+    return NextResponse.json(items);
+  } catch (err: any) {
+    console.error("🚨 Scan route error:", err);
+    return NextResponse.json(
+      { ok: false, error: err.message || String(err) },
+      { status: 500 }
+    );
   }
-
-  // Accept either direct array or wrapped `{ items: [...] }`
-  const items = Array.isArray(parsed)
-    ? parsed
-    : Array.isArray(parsed?.items)
-      ? parsed.items
-      : [];
-
-  return NextResponse.json(items); // always an array
 }
