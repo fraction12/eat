@@ -16,9 +16,9 @@ export async function POST(req: Request) {
     let jpegDataUrl = imageUrl;
     if (mime === "image/heic" || mime === "image/heif") {
       const buf = Buffer.from(base64, "base64");
-      const uint8Array = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+      // Use Node Buffer directly for conversion (Buffer is iterable)
       const jpegArrayBuffer = await heicConvert({
-        buffer: uint8Array,
+        buffer: buf as any,
         format: "JPEG",
         quality: 0.85,
       });
