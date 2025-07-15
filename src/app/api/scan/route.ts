@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+export const runtime = "nodejs";
+import { Buffer } from "buffer";
 import heicConvert from "heic-convert";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
@@ -18,11 +20,15 @@ export async function POST(req: Request) {
 
   if (mime === "image/heic" || mime === "image/heif") {
     const buf = Buffer.from(base64, "base64");
-    const jpegBuf = await heicConvert({
-      buffer: buf,
+    // Convert Node.js Buffer to ArrayBuffer for heic-convert
+    const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    const jpegArrayBuffer = await heicConvert({
+      buffer: arrayBuffer,
       format: "JPEG",
       quality: 0.85,
-    }) as unknown as Buffer;
+    });
+    // Convert back to Node.js Buffer to base64-encode
+    const jpegBuf = Buffer.from(jpegArrayBuffer);
     jpegDataUrl = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
   }
 
