@@ -34,7 +34,6 @@ export async function POST(req: Request) {
 
   const gpt = await openai.chat.completions.create({
     model: process.env.OPENAI_MODEL_ID || "gpt-4o",
-    response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
