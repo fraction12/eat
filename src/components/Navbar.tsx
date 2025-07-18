@@ -18,7 +18,7 @@ export function Navbar() {
 
   return (
     <nav className="w-full bg-white shadow p-4 flex justify-between items-center">
-      <Link href="/" className="text-xl font-bold">
+      <Link href="/scan" className="text-xl font-bold">
         Eat AI
       </Link>
       <button
