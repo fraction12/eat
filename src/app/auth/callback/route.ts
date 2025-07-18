@@ -8,7 +8,7 @@ export async function GET(req: Request) {
    const cookieStore = await cookies(); // from 'next/headers'
 
   const supabase = createRouteHandlerClient({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   })
 
   // Exchange the `?code=` param in the URL for a session cookie
