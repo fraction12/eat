@@ -22,6 +22,10 @@ type RSSRecipe = {
   source?: string
   category?: string
   area?: string
+  ingredients?: string[]
+  instructions?: string
+  tags?: string[]
+  videoUrl?: string
 }
 
 type Feed = {
@@ -56,6 +60,8 @@ export default function RecipesPage() {
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [feedWarnings, setFeedWarnings] = useState<Record<string, string>>({})
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
+  const [builtInRecipes, setBuiltInRecipes] = useState<RSSRecipe[]>([])
+  const [isLoadingBuiltIn, setIsLoadingBuiltIn] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -74,11 +80,28 @@ export default function RecipesPage() {
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
     if (user) {
+      fetchBuiltInRecipes()
       fetchFeeds()
       fetchInventory()
       fetchFavorites()
     }
   }, [user])
+
+  const fetchBuiltInRecipes = async () => {
+    setIsLoadingBuiltIn(true)
+    try {
+      const response = await fetch("/api/recipes/built-in")
+      if (response.ok) {
+        const data = await response.json()
+        setBuiltInRecipes(data.recipes || [])
+        console.log(`Loaded ${data.recipes?.length || 0} built-in recipes`)
+      }
+    } catch (error) {
+      console.error("Failed to fetch built-in recipes:", error)
+    } finally {
+      setIsLoadingBuiltIn(false)
+    }
+  }
 
   const fetchInventory = async () => {
     if (!user) return
@@ -349,14 +372,18 @@ export default function RecipesPage() {
   const canMakeRecipe = (recipe: RSSRecipe): number => {
     if (inventory.length === 0) return 0
 
-    const recipeText = `${recipe.title} ${recipe.description}`.toLowerCase()
+    // Use ingredients array if available (built-in recipes), otherwise fallback to text search
+    const searchText = recipe.ingredients
+      ? recipe.ingredients.join(" ").toLowerCase()
+      : `${recipe.title} ${recipe.description}`.toLowerCase()
+
     let matchCount = 0
 
     inventory.forEach((item) => {
       const itemName = item.item.toLowerCase()
       // Check for whole word matches
       const regex = new RegExp(`\\b${itemName}\\b`, 'i')
-      if (regex.test(recipeText)) {
+      if (regex.test(searchText)) {
         matchCount++
       }
     })
@@ -378,6 +405,9 @@ export default function RecipesPage() {
   // Combine all recipes from all sources
   const getAllRecipes = (): RSSRecipe[] => {
     const allRecipes: RSSRecipe[] = []
+
+    // Add built-in recipes FIRST (so they show up even for new users)
+    allRecipes.push(...builtInRecipes)
 
     // Add RSS feed recipes
     Object.entries(feedRecipes).forEach(([feedId, recipes]) => {
@@ -497,7 +527,19 @@ export default function RecipesPage() {
 
   const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
   const top5Recipes = getTop5Recipes()
-  const isLoading = isLoadingFeeds
+  const isLoading = isLoadingBuiltIn && isLoadingFeeds
+
+  // Get recipes user can make right now
+  const getCookNowRecipes = () => {
+    const allRecipes = getAllRecipes()
+    return allRecipes
+      .map(recipe => ({ recipe, matchCount: canMakeRecipe(recipe) }))
+      .filter(item => item.matchCount > 0)
+      .sort((a, b) => b.matchCount - a.matchCount)
+      .slice(0, 8)
+  }
+
+  const cookNowRecipes = getCookNowRecipes()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
@@ -508,8 +550,15 @@ export default function RecipesPage() {
             <div className="flex-1">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
               <p className="text-sm sm:text-base text-gray-600">
-                <span className="hidden sm:inline">Discover recipes from your favorite RSS feeds • {feeds.length} feeds active</span>
-                <span className="sm:hidden">{feeds.length} active feed{feeds.length !== 1 ? 's' : ''}</span>
+                <span className="hidden sm:inline">
+                  {builtInRecipes.length > 0
+                    ? `${builtInRecipes.length}+ recipes ready to cook • Find what you can make now`
+                    : `Discover recipes from your feeds • ${feeds.length} feeds active`
+                  }
+                </span>
+                <span className="sm:hidden">
+                  {builtInRecipes.length > 0 ? `${builtInRecipes.length}+ recipes` : `${feeds.length} feeds`}
+                </span>
               </p>
             </div>
             <div className="flex gap-2 sm:gap-3 shrink-0">
@@ -531,6 +580,73 @@ export default function RecipesPage() {
             </div>
           </div>
         </div>
+
+        {/* Cook Now - Hero Section */}
+        {!isLoading && cookNowRecipes.length > 0 && (
+          <div className="mb-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl p-6 sm:p-8 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <ChefHat className="h-8 w-8" />
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold">Cook Now with What You Have!</h2>
+                <p className="text-white/90 text-sm sm:text-base">
+                  You can make {cookNowRecipes.length} recipe{cookNowRecipes.length !== 1 ? 's' : ''} with your current inventory
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              {cookNowRecipes.slice(0, 4).map((item, idx) => {
+                const { recipe, matchCount } = item
+                const favorited = isFavorite(recipe.link)
+
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group"
+                  >
+                    <div className="relative mb-3">
+                      <img
+                        src={recipe.image}
+                        alt={recipe.title}
+                        className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3C/svg%3E"
+                        }}
+                      />
+                      <div className="absolute top-2 left-2 bg-white text-green-600 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        {matchCount} match{matchCount > 1 ? 'es' : ''}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          toggleFavorite(recipe)
+                        }}
+                        className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+                          favorited ? "bg-white text-red-500" : "bg-black/30 text-white hover:bg-white hover:text-red-500"
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${favorited ? "fill-current" : ""}`} />
+                      </button>
+                    </div>
+                    <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm">
+                      {recipe.title}
+                    </h3>
+                    <a
+                      href={recipe.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-white text-green-600 rounded-lg hover:bg-white/90 transition-colors text-sm font-semibold"
+                    >
+                      <ChefHat className="h-4 w-4" />
+                      Cook This Now
+                    </a>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Top 5 Featured Recipes */}
         {!isLoading && top5Recipes.length > 0 && (
