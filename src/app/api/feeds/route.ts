@@ -77,10 +77,21 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     // Insert the new feed
     const { data, error } = await supabase
       .from("recipe_feeds")
       .insert({
+        user_id: user.id,
         feed_url: feedUrl,
         feed_name: feedName,
         feed_description: feedDescription || null,
