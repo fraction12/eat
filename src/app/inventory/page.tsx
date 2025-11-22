@@ -13,9 +13,32 @@ import ReactWebcam from "react-webcam"
 import { ToastContainer, showToast } from "@/components/Toast"
 import Link from "next/link"
 
-type Item = { id: string; item: string; price: number; quantity: number; created_at: string; category?: Category }
+type Item = {
+  id: string
+  item: string
+  price: number
+  quantity: number
+  created_at: string
+  category?: Category
+  unit?: string
+}
 
 type Category = 'produce' | 'dairy' | 'meat' | 'bakery' | 'pantry' | 'frozen' | 'condiments'
+
+// Common units for different types of items
+const unitOptions = [
+  { value: 'count', label: 'Count' },
+  { value: 'oz', label: 'Ounces (oz)' },
+  { value: 'lb', label: 'Pounds (lb)' },
+  { value: 'g', label: 'Grams (g)' },
+  { value: 'kg', label: 'Kilograms (kg)' },
+  { value: 'ml', label: 'Milliliters (ml)' },
+  { value: 'l', label: 'Liters (L)' },
+  { value: 'gal', label: 'Gallons (gal)' },
+  { value: 'cup', label: 'Cups' },
+  { value: 'tbsp', label: 'Tablespoons' },
+  { value: 'tsp', label: 'Teaspoons' },
+]
 
 const categoryIcons: Record<Category, any> = {
   produce: Apple,
@@ -98,6 +121,8 @@ export default function InventoryPage() {
   const [manualItem, setManualItem] = useState("")
   const [manualPrice, setManualPrice] = useState("")
   const [manualQuantity, setManualQuantity] = useState("1")
+  const [manualCategory, setManualCategory] = useState<Category>("pantry")
+  const [manualUnit, setManualUnit] = useState("count")
   const [isAdding, setIsAdding] = useState(false)
 
   // Search and filter state
@@ -223,13 +248,21 @@ export default function InventoryPage() {
     setIsAdding(true)
 
     const price = manualPrice ? parseFloat(manualPrice) : 0
-    const quantity = manualQuantity ? parseInt(manualQuantity) : 1
+    const quantity = manualQuantity ? parseFloat(manualQuantity) : 1
 
     // Save to Supabase using the same endpoint
     const saveRes = await fetch("/api/saveItems", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ item: manualItem.trim(), price, quantity }] }),
+      body: JSON.stringify({
+        items: [{
+          item: manualItem.trim(),
+          price,
+          quantity,
+          category: manualCategory,
+          unit: manualUnit
+        }]
+      }),
     })
 
     if (!saveRes.ok) {
@@ -251,6 +284,8 @@ export default function InventoryPage() {
     setManualItem("")
     setManualPrice("")
     setManualQuantity("1")
+    setManualCategory("pantry")
+    setManualUnit("count")
     setIsAdding(false)
     showToast("success", "Item added to inventory!")
   }
@@ -455,40 +490,77 @@ export default function InventoryPage() {
                         className="text-lg"
                       />
                     </div>
+                    <div>
+                      <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-2">
+                        Category *
+                      </label>
+                      <select
+                        id="item-category"
+                        value={manualCategory}
+                        onChange={(e) => setManualCategory(e.target.value as Category)}
+                        disabled={isAdding}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                      >
+                        <option value="produce">🥬 Produce</option>
+                        <option value="dairy">🥛 Dairy</option>
+                        <option value="meat">🥩 Meat</option>
+                        <option value="bakery">🍞 Bakery</option>
+                        <option value="pantry">🥫 Pantry</option>
+                        <option value="frozen">🧊 Frozen</option>
+                        <option value="condiments">🧂 Condiments</option>
+                      </select>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
-                          Price (optional)
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                          <Input
-                            id="item-price"
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={manualPrice}
-                            onChange={(e) => setManualPrice(e.target.value)}
-                            disabled={isAdding}
-                            onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                            className="pl-8 text-lg"
-                          />
-                        </div>
-                      </div>
-                      <div>
                         <label htmlFor="item-quantity" className="block text-sm font-medium text-gray-700 mb-2">
-                          Quantity
+                          Quantity *
                         </label>
                         <Input
                           id="item-quantity"
                           type="number"
-                          min="1"
+                          min="0.01"
+                          step="0.01"
                           placeholder="1"
                           value={manualQuantity}
                           onChange={(e) => setManualQuantity(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
                           className="text-lg"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="item-unit" className="block text-sm font-medium text-gray-700 mb-2">
+                          Unit *
+                        </label>
+                        <select
+                          id="item-unit"
+                          value={manualUnit}
+                          onChange={(e) => setManualUnit(e.target.value)}
+                          disabled={isAdding}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-[42px]"
+                        >
+                          {unitOptions.map(unit => (
+                            <option key={unit.value} value={unit.value}>{unit.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                        Price (optional)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <Input
+                          id="item-price"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={manualPrice}
+                          onChange={(e) => setManualPrice(e.target.value)}
+                          disabled={isAdding}
+                          onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
+                          className="pl-8 text-lg"
                         />
                       </div>
                     </div>
@@ -652,34 +724,36 @@ export default function InventoryPage() {
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-3">
-                                  {/* Quantity Controls */}
-                                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                                    <button
-                                      onClick={async () => {
-                                        const newQty = Math.max(1, (item.quantity || 1) - 1)
-                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                        const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                                        setItems((data ?? []) as Item[])
-                                      }}
-                                      className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
-                                    >
-                                      −
-                                    </button>
-                                    <span className="font-bold text-gray-900 min-w-[2rem] text-center">
-                                      {item.quantity || 1}
-                                    </span>
-                                    <button
-                                      onClick={async () => {
-                                        const newQty = (item.quantity || 1) + 1
-                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                        const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                                        setItems((data ?? []) as Item[])
-                                      }}
-                                      className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
-                                    >
-                                      +
-                                    </button>
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  {/* Quantity Display with Unit */}
+                                  <div className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+                                      <button
+                                        onClick={async () => {
+                                          const newQty = Math.max(0.01, (item.quantity || 1) - (item.unit === 'count' ? 1 : 0.1))
+                                          await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                          const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                                          setItems((data ?? []) as Item[])
+                                        }}
+                                        className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
+                                      >
+                                        −
+                                      </button>
+                                      <span className="font-bold text-gray-900 min-w-[3rem] text-center">
+                                        {item.quantity || 1} {item.unit || 'count'}
+                                      </span>
+                                      <button
+                                        onClick={async () => {
+                                          const newQty = (item.quantity || 1) + (item.unit === 'count' ? 1 : 0.1)
+                                          await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                          const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                                          setItems((data ?? []) as Item[])
+                                        }}
+                                        className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
                                   </div>
 
                                   {/* Total Price */}

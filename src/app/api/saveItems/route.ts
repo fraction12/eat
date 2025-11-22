@@ -31,6 +31,8 @@ export async function POST(req: Request) {
       const itemName = newItem.item.trim();
       const price = newItem.price || 0;
       const quantity = newItem.quantity || 1;
+      const category = newItem.category || null;
+      const unit = newItem.unit || 'count';
 
       // Check if item already exists (case-insensitive)
       const { data: existingItems, error: fetchError } = await supabase
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
         // Item doesn't exist - insert new
         const { error: insertError } = await supabase
           .from("inventory")
-          .insert({ item: itemName, price, quantity });
+          .insert({ item: itemName, price, quantity, category, unit });
 
         if (insertError) {
           console.error("Error inserting new item:", insertError);
