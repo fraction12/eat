@@ -4,36 +4,31 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Mail, ArrowRight } from "lucide-react"
 
 export function Auth() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const [emailSent, setEmailSent] = useState(false)
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage("")
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
-        if (error) throw error
-        setMessage("Check your email for the confirmation link!")
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
-        setMessage("Signed in successfully!")
-        window.location.reload()
-      }
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/inventory`,
+        },
+      })
+
+      if (error) throw error
+
+      setEmailSent(true)
+      setMessage("Check your email for the magic link!")
     } catch (error: any) {
       setMessage(error.message || "An error occurred")
     } finally {
@@ -44,51 +39,84 @@ export function Auth() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-          🍳 Eat AI
-        </h1>
-        <p className="text-gray-600 text-center mb-8">
-          {isSignUp ? "Create your account" : "Sign in to your account"}
-        </p>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            🍳 Eat AI
+          </h1>
+          <p className="text-gray-600">
+            Sign in to track your ingredients and find recipes
+          </p>
+        </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+        {!emailSent ? (
+          <form onSubmit={handleMagicLink} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="pl-10 text-lg"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white"
               disabled={loading}
-            />
+              size="lg"
+            >
+              {loading ? (
+                "Sending magic link..."
+              ) : (
+                <>
+                  Send Magic Link
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </form>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 text-center">
+              <div className="text-6xl mb-4">📧</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Check your email!
+              </h3>
+              <p className="text-gray-600 mb-4">
+                We sent a magic link to <br />
+                <span className="font-semibold text-gray-900">{email}</span>
+              </p>
+              <p className="text-sm text-gray-500">
+                Click the link in the email to sign in. <br />
+                The link expires in 1 hour.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmailSent(false)
+                setEmail("")
+                setMessage("")
+              }}
+              className="w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
+            >
+              Use a different email
+            </button>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              minLength={6}
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading} size="lg">
-            {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-          </Button>
-        </form>
-
-        {message && (
+        {message && !emailSent && (
           <div className={`mt-4 p-3 rounded-lg text-sm ${
             message.includes("error") || message.includes("Error")
               ? "bg-red-100 text-red-700"
@@ -98,17 +126,15 @@ export function Auth() {
           </div>
         )}
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-            disabled={loading}
-          >
-            {isSignUp
-              ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
-          </button>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex-1 h-px bg-gray-200"></div>
+            <span>No password required</span>
+            <div className="flex-1 h-px bg-gray-200"></div>
+          </div>
+          <p className="text-xs text-gray-500 text-center mt-4">
+            We'll send you a secure login link. No passwords to remember! 🎉
+          </p>
         </div>
       </div>
     </div>
