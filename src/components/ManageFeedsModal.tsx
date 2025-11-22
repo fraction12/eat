@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Trash2, ExternalLink, AlertCircle, X, Rss } from "lucide-react"
+import { showToast } from "@/components/Toast"
 
 type Feed = {
   id: string
@@ -103,12 +104,9 @@ export function ManageFeedsModal({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${feed.feed_name}"?`)) {
-                        onDeleteFeed(feed.id)
-                      }
-                    }}
+                    onClick={() => onDeleteFeed(feed.id)}
                     className="text-red-600 hover:text-red-800 hover:bg-red-50 flex-shrink-0"
+                    title={`Remove ${feed.feed_name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

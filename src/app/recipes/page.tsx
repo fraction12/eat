@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
+import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 
 type RSSRecipe = {
@@ -114,10 +115,13 @@ export default function RecipesPage() {
 
         if (response.ok) {
           setFavorites(favorites.filter((fav) => fav.recipe_link !== recipe.link))
+          showToast("success", "Removed from favorites")
+        } else {
+          showToast("error", "Failed to remove from favorites")
         }
       } catch (error) {
         console.error("Failed to remove favorite:", error)
-        alert("Failed to remove from favorites")
+        showToast("error", "Failed to remove from favorites")
       }
     } else {
       // Add to favorites
@@ -138,11 +142,14 @@ export default function RecipesPage() {
           const data = await response.json()
           if (data.favorite) {
             setFavorites([...favorites, data.favorite])
+            showToast("success", "Added to favorites")
           }
+        } else {
+          showToast("error", "Failed to add to favorites")
         }
       } catch (error) {
         console.error("Failed to add favorite:", error)
-        alert("Failed to add to favorites")
+        showToast("error", "Failed to add to favorites")
       }
     }
   }
@@ -155,13 +162,17 @@ export default function RecipesPage() {
         const data = await response.json()
         let userFeeds = data.feeds || []
 
-        // If no feeds exist, add Bon Appétit as default
+        // Auto-add default feeds if none exist
         if (userFeeds.length === 0) {
+          showToast("info", "Setting up your recipe feeds...")
           await addDefaultFeed()
           const response2 = await fetch("/api/feeds")
           if (response2.ok) {
             const data2 = await response2.json()
             userFeeds = data2.feeds || []
+            if (userFeeds.length > 0) {
+              showToast("success", `Added ${userFeeds.length} recipe feeds!`)
+            }
           }
         }
 
@@ -174,6 +185,7 @@ export default function RecipesPage() {
       }
     } catch (error) {
       console.error("Failed to fetch feeds:", error)
+      showToast("error", "Failed to load recipe feeds")
     } finally {
       setIsLoadingFeeds(false)
     }
@@ -308,8 +320,6 @@ export default function RecipesPage() {
   }
 
   const handleDeleteFeed = async (feedId: string) => {
-    if (!confirm("Are you sure you want to remove this feed?")) return
-
     try {
       const response = await fetch(`/api/feeds?id=${feedId}`, {
         method: "DELETE",
@@ -321,10 +331,13 @@ export default function RecipesPage() {
           const { [feedId]: _, ...rest } = prev
           return rest
         })
+        showToast("success", "Feed removed successfully")
+      } else {
+        showToast("error", "Failed to remove feed")
       }
     } catch (error) {
       console.error("Failed to delete feed:", error)
-      alert("Failed to delete feed")
+      showToast("error", "Failed to remove feed")
     }
   }
 
@@ -488,22 +501,6 @@ export default function RecipesPage() {
                 <Plus className="h-5 w-5" />
                 Add Feed
               </Button>
-              {feeds.length < 15 && (
-                <Button
-                  onClick={async () => {
-                    if (confirm("Add all 15 default RSS feeds?")) {
-                      await addDefaultFeed()
-                      await fetchFeeds()
-                    }
-                  }}
-                  size="lg"
-                  variant="outline"
-                  className="gap-2 bg-green-50 hover:bg-green-100"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  Add Default Feeds
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -934,6 +931,8 @@ export default function RecipesPage() {
         onDeleteFeed={handleDeleteFeed}
         feedWarnings={feedWarnings}
       />
+
+      <ToastContainer />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, X, Rss } from "lucide-react"
+import { showToast } from "@/components/Toast"
 
 type AddFeedModalProps = {
   isOpen: boolean
@@ -21,7 +22,7 @@ export function AddFeedModal({ isOpen, onClose, onFeedAdded }: AddFeedModalProps
 
   const handleAdd = async () => {
     if (!feedUrl.trim() || !feedName.trim()) {
-      alert("Feed URL and Name are required")
+      showToast("error", "Feed URL and Name are required")
       return
     }
 
@@ -50,9 +51,10 @@ export function AddFeedModal({ isOpen, onClose, onFeedAdded }: AddFeedModalProps
       // Notify parent
       onFeedAdded()
       onClose()
+      showToast("success", "Feed added successfully!")
     } catch (error) {
       console.error("Error adding feed:", error)
-      alert("Failed to add feed. Please check the URL and try again.")
+      showToast("error", "Failed to add feed. Please check the URL and try again.")
     } finally {
       setIsAdding(false)
     }
