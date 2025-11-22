@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase"
 import ReactWebcam from "react-webcam"
 import { ToastContainer, showToast } from "@/components/Toast"
 import Link from "next/link"
+import { useAuth } from "@/components/AuthProvider"
 
 type Item = {
   id: string
@@ -107,6 +108,7 @@ function getDaysOld(createdAt: string): number {
 }
 
 export default function InventoryPage() {
+  const { user } = useAuth()
   const [isScanning, setIsScanning] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [items, setItems] = useState<Item[]>([])
@@ -146,18 +148,21 @@ export default function InventoryPage() {
     })
   }
 
-  // Fetch current inventory
-  useEffect(() => {
-    async function fetchItems() {
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("*")
-        .order("created_at", { ascending: false })
+  // Helper function to refetch user's inventory
+  const refetchItems = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from("inventory")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+    setItems((data ?? []) as Item[])
+  }
 
-      if (!error && data) setItems(data as Item[])
-    }
-    fetchItems()
-  }, [])
+  // Fetch current inventory for the logged-in user
+  useEffect(() => {
+    refetchItems()
+  }, [user])
 
   const handleDelete = async (id: string) => {
     await supabase.from("inventory").delete().eq("id", id)
@@ -167,8 +172,7 @@ export default function InventoryPage() {
 
   const handleCategoryChange = async (id: string, newCategory: Category) => {
     await supabase.from("inventory").update({ category: newCategory }).eq("id", id)
-    const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-    setItems((data ?? []) as Item[])
+    await refetchItems()
     showToast("success", "Category updated")
   }
 
@@ -211,11 +215,7 @@ export default function InventoryPage() {
     }
 
     // 3. Refresh list
-    const { data } = await supabase
-      .from("inventory")
-      .select("*")
-      .order("created_at", { ascending: false })
-    setItems((data ?? []) as Item[])
+    await refetchItems()
   }
 
   const handleScan = async () => {
@@ -274,11 +274,7 @@ export default function InventoryPage() {
     }
 
     // Refresh list
-    const { data } = await supabase
-      .from("inventory")
-      .select("*")
-      .order("created_at", { ascending: false })
-    setItems((data ?? []) as Item[])
+    await refetchItems()
 
     // Clear form
     setManualItem("")
@@ -735,8 +731,7 @@ export default function InventoryPage() {
                                           const step = item.unit === 'count' ? 1 : 0.1
                                           const newQty = Math.max(0.01, Number(((item.quantity || 1) - step).toFixed(2)))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                          const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                                          setItems((data ?? []) as Item[])
+                                          await refetchItems()
                                         }}
                                         className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
                                       >
@@ -750,8 +745,7 @@ export default function InventoryPage() {
                                           const step = item.unit === 'count' ? 1 : 0.1
                                           const newQty = Number(((item.quantity || 1) + step).toFixed(2))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                          const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                                          setItems((data ?? []) as Item[])
+                                          await refetchItems()
                                         }}
                                         className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
                                       >
