@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Plus, Folder, Trash2, Edit2, Check, ArrowLeft, ExternalLink, ChefHat } from "lucide-react"
+import { X, Plus, Folder, Trash2, Edit2, Check, ArrowLeft, ExternalLink, ChefHat, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { showToast } from "@/components/Toast"
 
 type Collection = {
@@ -47,6 +47,8 @@ export function CollectionsModal({
   const [viewingCollection, setViewingCollection] = useState<Collection | null>(null)
   const [collectionRecipes, setCollectionRecipes] = useState<CollectionRecipe[]>([])
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false)
+  const [recipeSearchQuery, setRecipeSearchQuery] = useState("")
+  const [carouselIndex, setCarouselIndex] = useState(0)
 
   // New collection form
   const [newName, setNewName] = useState("")
@@ -59,6 +61,11 @@ export function CollectionsModal({
 
   useEffect(() => {
     if (isOpen) {
+      // Reset viewing state when modal opens
+      setViewingCollection(null)
+      setCollectionRecipes([])
+      setRecipeSearchQuery("")
+      setCarouselIndex(0)
       fetchCollections()
     }
   }, [isOpen])
@@ -242,48 +249,120 @@ export function CollectionsModal({
                 <p className="text-sm text-gray-400 mt-1">Use the bookmark button on recipes to add them here</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {collectionRecipes.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all"
-                  >
-                    <div className="relative h-40">
-                      <img
-                        src={recipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3C/svg%3E"}
-                        alt={recipe.recipe_title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
-                        {recipe.recipe_title}
-                      </h4>
-                      {recipe.recipe_source && (
-                        <p className="text-xs text-gray-500 mb-3">{recipe.recipe_source}</p>
-                      )}
-                      <div className="flex gap-2">
-                        <a
-                          href={recipe.recipe_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-semibold"
-                        >
-                          <ChefHat className="h-3.5 w-3.5" />
-                          Cook
-                        </a>
-                        <button
-                          onClick={() => removeRecipeFromCollection(recipe.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove from collection"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+              <>
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search recipes..."
+                      value={recipeSearchQuery}
+                      onChange={(e) => {
+                        setRecipeSearchQuery(e.target.value)
+                        setCarouselIndex(0) // Reset to first recipe when searching
+                      }}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {(() => {
+                  // Filter recipes based on search
+                  const filteredRecipes = collectionRecipes.filter(recipe =>
+                    recipe.recipe_title.toLowerCase().includes(recipeSearchQuery.toLowerCase()) ||
+                    recipe.recipe_source?.toLowerCase().includes(recipeSearchQuery.toLowerCase())
+                  )
+
+                  // Reset carousel index if it's out of bounds
+                  if (carouselIndex >= filteredRecipes.length && filteredRecipes.length > 0) {
+                    setCarouselIndex(0)
+                  }
+
+                  if (filteredRecipes.length === 0) {
+                    return (
+                      <div className="text-center py-12">
+                        <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-600">No recipes found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try a different search term</p>
+                      </div>
+                    )
+                  }
+
+                  const currentRecipe = filteredRecipes[carouselIndex]
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Position Indicator */}
+                      <div className="text-center text-sm text-gray-600 font-medium">
+                        {carouselIndex + 1} of {filteredRecipes.length}
+                      </div>
+
+                      {/* Carousel */}
+                      <div className="relative">
+                        {/* Previous Button */}
+                        {filteredRecipes.length > 1 && (
+                          <button
+                            onClick={() => setCarouselIndex((prev) => (prev - 1 + filteredRecipes.length) % filteredRecipes.length)}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                            disabled={filteredRecipes.length === 1}
+                          >
+                            <ChevronLeft className="h-6 w-6 text-gray-700" />
+                          </button>
+                        )}
+
+                        {/* Recipe Card */}
+                        <div className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden shadow-lg">
+                          <div className="relative h-64">
+                            <img
+                              src={currentRecipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3C/svg%3E"}
+                              alt={currentRecipe.recipe_title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">
+                              {currentRecipe.recipe_title}
+                            </h4>
+                            {currentRecipe.recipe_source && (
+                              <p className="text-sm text-gray-500 mb-4">{currentRecipe.recipe_source}</p>
+                            )}
+                            <div className="flex gap-2">
+                              <a
+                                href={currentRecipe.recipe_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-semibold"
+                              >
+                                <ChefHat className="h-4 w-4" />
+                                Cook This Recipe
+                              </a>
+                              <button
+                                onClick={() => removeRecipeFromCollection(currentRecipe.id)}
+                                className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Remove from collection"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Next Button */}
+                        {filteredRecipes.length > 1 && (
+                          <button
+                            onClick={() => setCarouselIndex((prev) => (prev + 1) % filteredRecipes.length)}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                            disabled={filteredRecipes.length === 1}
+                          >
+                            <ChevronRight className="h-6 w-6 text-gray-700" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )
+                })()}
+              </>
             )
           ) : (
             /* Show collections list */
