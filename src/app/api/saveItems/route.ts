@@ -26,6 +26,13 @@ export async function POST(req: Request) {
   try {
     const { items } = await req.json(); // [{ item, price, quantity? }]
 
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
+
     // Process each item
     for (const newItem of items) {
       const itemName = newItem.item.trim();
@@ -34,10 +41,11 @@ export async function POST(req: Request) {
       const category = newItem.category || null;
       const unit = newItem.unit || 'count';
 
-      // Check if item already exists (case-insensitive)
+      // Check if item already exists (case-insensitive) for this user
       const { data: existingItems, error: fetchError } = await supabase
         .from("inventory")
         .select("*")
+        .eq("user_id", user.id)
         .ilike("item", itemName);
 
       if (fetchError) {
@@ -60,10 +68,10 @@ export async function POST(req: Request) {
           return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
         }
       } else {
-        // Item doesn't exist - insert new
+        // Item doesn't exist - insert new with user_id
         const { error: insertError } = await supabase
           .from("inventory")
-          .insert({ item: itemName, price, quantity, category, unit });
+          .insert({ item: itemName, price, quantity, category, unit, user_id: user.id });
 
         if (insertError) {
           console.error("Error inserting new item:", insertError);

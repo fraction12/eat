@@ -1,20 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/utils/supabase-browser';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 import { Package, ChefHat, LogOut } from 'lucide-react';
 
 export function Navbar() {
-  const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useAuth();
+
   if (pathname?.startsWith('/auth')) {
     return null;
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth/signin');
+    await signOut();
   };
 
   const isActive = (path: string) => {
