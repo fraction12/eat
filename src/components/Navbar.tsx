@@ -37,8 +37,7 @@ export function Navbar() {
             onClick={closeMobileMenu}
           >
             <span className="text-2xl sm:text-3xl">🍳</span>
-            <span className="hidden xs:inline">Eat AI</span>
-            <span className="xs:hidden">Eat</span>
+            Eat
           </Link>
 
           {/* Desktop Navigation */}

@@ -118,13 +118,17 @@ function getStepForUnit(unit?: string): number {
       return 1  // Single ounce/gram/ml increments
     case 'lb':
     case 'kg':
+      return 0.1  // Decimal increments for weight
     case 'l':
+      return 0.5  // Half liter increments
     case 'gal':
-      return 0.1  // Decimal increments for larger units
+      return 0.25  // Quarter gallon increments
     case 'cup':
+      return 0.25  // Quarter cup increments
     case 'tbsp':
+      return 1  // Whole tablespoon increments
     case 'tsp':
-      return 0.5  // Half cup/tbsp/tsp increments
+      return 0.5  // Half teaspoon increments
     default:
       return 0.1
   }
