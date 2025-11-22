@@ -107,6 +107,29 @@ function getDaysOld(createdAt: string): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
+// Get appropriate step size based on unit
+function getStepForUnit(unit?: string): number {
+  if (!unit || unit === 'count') return 1
+
+  switch (unit) {
+    case 'oz':
+    case 'g':
+    case 'ml':
+      return 1  // Single ounce/gram/ml increments
+    case 'lb':
+    case 'kg':
+    case 'l':
+    case 'gal':
+      return 0.1  // Decimal increments for larger units
+    case 'cup':
+    case 'tbsp':
+    case 'tsp':
+      return 0.5  // Half cup/tbsp/tsp increments
+    default:
+      return 0.1
+  }
+}
+
 export default function InventoryPage() {
   const { user } = useAuth()
   const [isScanning, setIsScanning] = useState(false)
@@ -660,7 +683,7 @@ export default function InventoryPage() {
                         onClick={() => toggleCategory(category as Category)}
                         className={`w-full px-6 py-4 bg-white ${colors.borderLeft} hover:bg-gray-50 transition-colors`}
                       >
-                        <div className="flex items-center justify-between pr-2">
+                        <div className="flex items-center justify-between pr-6">
                           <div className="flex items-center gap-3">
                             <Icon className={`h-6 w-6 ${colors.iconColor}`} />
                             <h3 className="text-lg font-bold text-gray-800 capitalize">{category}</h3>
@@ -737,8 +760,9 @@ export default function InventoryPage() {
                                     <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
                                       <button
                                         onClick={async () => {
-                                          const step = item.unit === 'count' ? 1 : 0.1
-                                          const newQty = Math.max(0.01, Number(((item.quantity || 1) - step).toFixed(2)))
+                                          const step = getStepForUnit(item.unit)
+                                          const currentQty = Number(item.quantity || 1)
+                                          const newQty = Math.max(step, Number((currentQty - step).toFixed(2)))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
                                           await refetchItems()
                                         }}
@@ -747,12 +771,13 @@ export default function InventoryPage() {
                                         −
                                       </button>
                                       <span className="font-bold text-gray-900 min-w-[4rem] text-center text-sm">
-                                        {item.unit === 'count' ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
+                                        {(!item.unit || item.unit === 'count') ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
                                       </span>
                                       <button
                                         onClick={async () => {
-                                          const step = item.unit === 'count' ? 1 : 0.1
-                                          const newQty = Number(((item.quantity || 1) + step).toFixed(2))
+                                          const step = getStepForUnit(item.unit)
+                                          const currentQty = Number(item.quantity || 1)
+                                          const newQty = Number((currentQty + step).toFixed(2))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
                                           await refetchItems()
                                         }}
