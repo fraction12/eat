@@ -3,16 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2, Plus, ExternalLink, Trash2, Rss } from "lucide-react"
-import { RecipeCarousel } from "@/components/RecipeCarousel"
 import { AddFeedModal } from "@/components/AddFeedModal"
-
-type AIRecipe = {
-  title: string
-  description: string
-  ingredients: string[]
-  instructions: string[]
-  missingIngredients?: string[]
-}
 
 type RSSRecipe = {
   title: string
@@ -31,33 +22,11 @@ type Feed = {
 }
 
 export default function RecipesPage() {
-  const [aiRecipes, setAiRecipes] = useState<AIRecipe[]>([])
-  const [isLoadingAI, setIsLoadingAI] = useState(true)
-
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
-
-  // Fetch AI-suggested recipes based on inventory
-  useEffect(() => {
-    async function fetchAIRecipes() {
-      setIsLoadingAI(true)
-      try {
-        const response = await fetch("/api/recipes")
-        if (response.ok) {
-          const data = await response.json()
-          setAiRecipes(data.recipes || [])
-        }
-      } catch (error) {
-        console.error("Failed to fetch AI recipes:", error)
-      } finally {
-        setIsLoadingAI(false)
-      }
-    }
-    fetchAIRecipes()
-  }, [])
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -154,28 +123,12 @@ export default function RecipesPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
-          <p className="text-gray-600">Discover recipes from your favorite sources and see what you can cook</p>
-        </div>
-
-        {/* AI-Suggested Recipes Carousel */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Based on Your Inventory</h2>
-          {isLoadingAI ? (
-            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-              <Loader2 className="h-12 w-12 text-green-600 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Analyzing your inventory...</p>
-            </div>
-          ) : (
-            <RecipeCarousel recipes={aiRecipes.slice(0, 5)} />
-          )}
-        </div>
-
-        {/* RSS Feeds Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Recipe Feeds</h2>
-          <Button onClick={() => setShowAddFeedModal(true)} className="gap-2">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
+            <p className="text-gray-600">Discover recipes from your favorite sources</p>
+          </div>
+          <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
             <Plus className="h-5 w-5" />
             Add Feed
           </Button>
@@ -204,7 +157,7 @@ export default function RecipesPage() {
                 {/* Feed Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">{feed.feed_name}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">{feed.feed_name}</h3>
                     {feed.feed_description && (
                       <p className="text-sm text-gray-600 mt-1">{feed.feed_description}</p>
                     )}
@@ -230,51 +183,53 @@ export default function RecipesPage() {
                     <p className="text-gray-600">No recipes found in this feed</p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {feedRecipes[feed.id].slice(0, 8).map((recipe, idx) => (
-                      <a
-                        key={idx}
-                        href={recipe.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-all"
-                      >
-                        {/* Recipe Image */}
-                        <div className="relative h-48 bg-gray-200 overflow-hidden">
-                          <img
-                            src={recipe.image}
-                            alt={recipe.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"
-                            }}
-                          />
-                          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="h-4 w-4 text-gray-900" />
+                  <>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {feedRecipes[feed.id].map((recipe, idx) => (
+                        <a
+                          key={idx}
+                          href={recipe.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group bg-gray-50 rounded-xl overflow-hidden hover:shadow-xl transition-all border border-gray-200"
+                        >
+                          {/* Recipe Image */}
+                          <div className="relative h-56 bg-gray-200 overflow-hidden">
+                            <img
+                              src={recipe.image}
+                              alt={recipe.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                              <ExternalLink className="h-5 w-5 text-gray-900" />
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Recipe Info */}
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
-                            {recipe.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                            {recipe.description}
-                          </p>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {feedRecipes[feed.id] && feedRecipes[feed.id].length > 8 && (
-                  <div className="text-center mt-4">
-                    <p className="text-sm text-gray-500">
-                      Showing 8 of {feedRecipes[feed.id].length} recipes
-                    </p>
-                  </div>
+                          {/* Recipe Info */}
+                          <div className="p-5">
+                            <h4 className="font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors text-lg leading-tight mb-2">
+                              {recipe.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                              {recipe.description}
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                    {feedRecipes[feed.id].length > 20 && (
+                      <div className="text-center mt-6">
+                        <p className="text-sm text-gray-500">
+                          Showing {Math.min(20, feedRecipes[feed.id].length)} of {feedRecipes[feed.id].length} recipes
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ))}
