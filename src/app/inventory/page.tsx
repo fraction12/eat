@@ -349,9 +349,12 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Kitchen Inventory</h1>
-          <p className="text-gray-600">Track what you have • Find what you can make • Never forget what you bought</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Kitchen Inventory</h1>
+          <p className="text-sm sm:text-base text-gray-600 px-4">
+            <span className="hidden sm:inline">Track what you have • Find what you can make • Never forget what you bought</span>
+            <span className="sm:hidden">Track, find, and cook with what you have</span>
+          </p>
         </div>
 
         {/* Quick Stats Dashboard */}
@@ -380,16 +383,17 @@ export default function InventoryPage() {
 
         {/* Recipe Suggestion Widget */}
         {stats.totalItems > 0 && (
-          <div className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl shadow-xl p-6 mb-8 text-white">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl shadow-xl p-5 sm:p-6 mb-6 sm:mb-8 text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold mb-2">Ready to Cook?</h2>
-                <p className="text-white/90">You have {stats.totalItems} ingredients. Let's find recipes you can make!</p>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">Ready to Cook?</h2>
+                <p className="text-sm sm:text-base text-white/90">You have {stats.totalItems} ingredient{stats.totalItems !== 1 ? 's' : ''}. Let's find recipes!</p>
               </div>
-              <Link href="/recipes">
-                <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+              <Link href="/recipes" className="shrink-0">
+                <Button size="lg" className="w-full sm:w-auto bg-white text-orange-600 hover:bg-gray-100">
                   <ChefHat className="mr-2 h-5 w-5" />
-                  Find Recipes
+                  <span className="hidden sm:inline">Find Recipes</span>
+                  <span className="sm:hidden">Find</span>
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -718,13 +722,13 @@ export default function InventoryPage() {
                           return (
                             <div
                               key={item.id}
-                              className="p-5 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
+                              className="p-4 sm:p-5 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
                             >
-                              <div className="flex items-start justify-between gap-6">
+                              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                                 {/* Left: Item Info */}
                                 <div className="flex-1 min-w-0">
                                   {/* Item Name & Badges */}
-                                  <div className="flex items-center gap-2 mb-3">
+                                  <div className="flex items-center gap-2 mb-2 sm:mb-3 flex-wrap">
                                     <h4 className="font-semibold text-gray-900 text-base">{item.item}</h4>
                                     {isNew && (
                                       <span className="inline-flex items-center h-6 px-2.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
@@ -740,23 +744,24 @@ export default function InventoryPage() {
                                   </div>
 
                                   {/* Metadata Row - Improved Layout */}
-                                  <div className="flex items-center gap-3 flex-wrap">
+                                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                                     {/* Price */}
-                                    <div className="inline-flex items-center h-8 px-3 bg-gray-50 rounded-md text-sm text-gray-700 font-medium">
-                                      ${Number(item.price).toFixed(2)} each
+                                    <div className="inline-flex items-center h-8 px-2.5 sm:px-3 bg-gray-50 rounded-md text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">
+                                      ${Number(item.price).toFixed(2)}
+                                      <span className="hidden sm:inline ml-1">each</span>
                                     </div>
 
                                     {/* Date */}
-                                    <div className="inline-flex items-center h-8 px-3 bg-gray-50 rounded-md text-sm text-gray-600 gap-1.5">
-                                      <Clock className="h-3.5 w-3.5" />
-                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld} days ago`}</span>
+                                    <div className="inline-flex items-center h-8 px-2.5 sm:px-3 bg-gray-50 rounded-md text-xs sm:text-sm text-gray-600 gap-1.5 whitespace-nowrap">
+                                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
                                     </div>
 
                                     {/* Category Dropdown */}
                                     <select
                                       value={categorizeItem(item)}
                                       onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                      className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                      className="h-8 px-2 sm:px-3 py-0 text-xs sm:text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     >
                                       <option value="produce">🥬 Produce</option>
                                       <option value="dairy">🥛 Dairy</option>
@@ -771,7 +776,7 @@ export default function InventoryPage() {
                                     <select
                                       value={item.unit || 'count'}
                                       onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                      className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                      className="h-8 px-2 sm:px-3 py-0 text-xs sm:text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors max-w-[120px]"
                                     >
                                       {unitOptions.map(opt => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -781,9 +786,9 @@ export default function InventoryPage() {
                                 </div>
 
                                 {/* Right: Quantity Controls & Actions */}
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
                                   {/* Quantity Controls */}
-                                  <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 rounded-lg px-2 sm:px-3 py-2 border border-gray-200">
                                     <button
                                       onClick={async () => {
                                         const step = getStepForUnit(item.unit)
@@ -796,7 +801,7 @@ export default function InventoryPage() {
                                     >
                                       −
                                     </button>
-                                    <span className="font-semibold text-gray-900 min-w-[5rem] text-center text-sm">
+                                    <span className="font-semibold text-gray-900 min-w-[4rem] sm:min-w-[5rem] text-center text-xs sm:text-sm">
                                       {(!item.unit || item.unit === 'count') ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
                                     </span>
                                     <button
@@ -813,22 +818,24 @@ export default function InventoryPage() {
                                     </button>
                                   </div>
 
-                                  {/* Total Price */}
-                                  <div className="text-right min-w-[5rem]">
-                                    <div className="text-lg font-bold text-gray-900">
-                                      ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
+                                  {/* Total Price & Delete */}
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="text-right">
+                                      <div className="text-base sm:text-lg font-bold text-gray-900 whitespace-nowrap">
+                                        ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
+                                      </div>
                                     </div>
-                                  </div>
 
-                                  {/* Delete Button */}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDelete(item.id)}
-                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                    {/* Delete Button */}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDelete(item.id)}
+                                      className="h-9 w-9 p-0 text-red-600 hover:text-red-800 hover:bg-red-50 shrink-0"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

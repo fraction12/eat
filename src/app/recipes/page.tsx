@@ -486,27 +486,30 @@ export default function RecipesPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
-              <p className="text-gray-600">
-                Discover recipes from your favorite RSS feeds • {feeds.length} feeds active
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                <span className="hidden sm:inline">Discover recipes from your favorite RSS feeds • {feeds.length} feeds active</span>
+                <span className="sm:hidden">{feeds.length} active feed{feeds.length !== 1 ? 's' : ''}</span>
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 shrink-0">
               <Button
                 onClick={() => setShowManageFeedsModal(true)}
                 size="lg"
                 variant="outline"
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-initial"
               >
                 <Rss className="h-5 w-5" />
-                Manage Feeds ({feeds.length})
+                <span className="hidden sm:inline">Manage Feeds ({feeds.length})</span>
+                <span className="sm:hidden">Manage</span>
               </Button>
-              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
+              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2 flex-1 sm:flex-initial">
                 <Plus className="h-5 w-5" />
-                Add Feed
+                <span className="hidden sm:inline">Add Feed</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
