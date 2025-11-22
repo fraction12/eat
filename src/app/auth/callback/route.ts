@@ -1,15 +1,28 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server'
-import { cookies, headers } from 'next/headers'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET(req: Request) {
-   const cookieStore = await cookies(); // from 'next/headers'
+  const cookieStore = await cookies()
 
-  const supabase = createRouteHandlerClient({
-    cookies: async () => cookieStore,
-  })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
 
   // Exchange the `?code=` param in the URL for a session cookie
   const { searchParams } = new URL(req.url);
