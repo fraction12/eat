@@ -679,6 +679,16 @@ export default function RecipesPage() {
                       >
                         <Heart className={`h-4 w-4 ${favorited ? "fill-current" : ""}`} />
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          saveToCollection(recipe)
+                        }}
+                        className="absolute top-2 right-10 p-1.5 rounded-full backdrop-blur-sm bg-black/30 text-white hover:bg-white hover:text-blue-600 transition-all"
+                        title="Save to collection"
+                      >
+                        <Bookmark className="h-4 w-4" />
+                      </button>
                     </div>
                     <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm">
                       {recipe.title}
@@ -744,6 +754,18 @@ export default function RecipesPage() {
                         }`}
                       >
                         <Heart className={`h-5 w-5 ${favorited ? "fill-current" : ""}`} />
+                      </button>
+
+                      {/* Save to Collection Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          saveToCollection(recipe)
+                        }}
+                        className="absolute top-3 right-14 p-2 rounded-full backdrop-blur-sm bg-black/30 text-white hover:bg-white/90 hover:text-blue-600 transition-all"
+                        title="Save to collection"
+                      >
+                        <Bookmark className="h-5 w-5" />
                       </button>
 
                       {/* Match Badge */}
