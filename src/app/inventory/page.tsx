@@ -718,36 +718,45 @@ export default function InventoryPage() {
                           return (
                             <div
                               key={item.id}
-                              className="p-4 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
+                              className="p-5 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
                             >
-                              <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-start justify-between gap-6">
+                                {/* Left: Item Info */}
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-semibold text-gray-900">{item.item}</h4>
+                                  {/* Item Name & Badges */}
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <h4 className="font-semibold text-gray-900 text-base">{item.item}</h4>
                                     {isNew && (
-                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                      <span className="inline-flex items-center h-6 px-2.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
                                         NEW
                                       </span>
                                     )}
                                     {isLowStock && (
-                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                      <span className="inline-flex items-center h-6 px-2.5 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
                                         <AlertCircle className="h-3 w-3" />
                                         Low
                                       </span>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
-                                    <span>${Number(item.price).toFixed(2)} each</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld} days ago`}
-                                    </span>
-                                    <span>•</span>
+
+                                  {/* Metadata Row - Improved Layout */}
+                                  <div className="flex items-center gap-3 flex-wrap">
+                                    {/* Price */}
+                                    <div className="inline-flex items-center h-8 px-3 bg-gray-50 rounded-md text-sm text-gray-700 font-medium">
+                                      ${Number(item.price).toFixed(2)} each
+                                    </div>
+
+                                    {/* Date */}
+                                    <div className="inline-flex items-center h-8 px-3 bg-gray-50 rounded-md text-sm text-gray-600 gap-1.5">
+                                      <Clock className="h-3.5 w-3.5" />
+                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld} days ago`}</span>
+                                    </div>
+
+                                    {/* Category Dropdown */}
                                     <select
                                       value={categorizeItem(item)}
                                       onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                      className="text-xs px-2 py-1 border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                      className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     >
                                       <option value="produce">🥬 Produce</option>
                                       <option value="dairy">🥛 Dairy</option>
@@ -757,11 +766,12 @@ export default function InventoryPage() {
                                       <option value="frozen">🧊 Frozen</option>
                                       <option value="condiments">🧂 Condiments</option>
                                     </select>
-                                    <span>•</span>
+
+                                    {/* Unit Dropdown */}
                                     <select
                                       value={item.unit || 'count'}
                                       onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                      className="text-xs px-2 py-1 border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                      className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     >
                                       {unitOptions.map(opt => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -770,42 +780,41 @@ export default function InventoryPage() {
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 flex-wrap">
-                                  {/* Quantity Display with Unit */}
-                                  <div className="flex flex-col items-center gap-1">
-                                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                                      <button
-                                        onClick={async () => {
-                                          const step = getStepForUnit(item.unit)
-                                          const currentQty = Number(item.quantity || 1)
-                                          const newQty = Math.max(step, Number((currentQty - step).toFixed(2)))
-                                          await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                          await refetchItems()
-                                        }}
-                                        className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
-                                      >
-                                        −
-                                      </button>
-                                      <span className="font-bold text-gray-900 min-w-[4rem] text-center text-sm">
-                                        {(!item.unit || item.unit === 'count') ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
-                                      </span>
-                                      <button
-                                        onClick={async () => {
-                                          const step = getStepForUnit(item.unit)
-                                          const currentQty = Number(item.quantity || 1)
-                                          const newQty = Number((currentQty + step).toFixed(2))
-                                          await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                          await refetchItems()
-                                        }}
-                                        className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
-                                      >
-                                        +
-                                      </button>
-                                    </div>
+                                {/* Right: Quantity Controls & Actions */}
+                                <div className="flex items-center gap-4">
+                                  {/* Quantity Controls */}
+                                  <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                                    <button
+                                      onClick={async () => {
+                                        const step = getStepForUnit(item.unit)
+                                        const currentQty = Number(item.quantity || 1)
+                                        const newQty = Math.max(step, Number((currentQty - step).toFixed(2)))
+                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                        await refetchItems()
+                                      }}
+                                      className="flex items-center justify-center w-7 h-7 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-colors font-bold text-lg"
+                                    >
+                                      −
+                                    </button>
+                                    <span className="font-semibold text-gray-900 min-w-[5rem] text-center text-sm">
+                                      {(!item.unit || item.unit === 'count') ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
+                                    </span>
+                                    <button
+                                      onClick={async () => {
+                                        const step = getStepForUnit(item.unit)
+                                        const currentQty = Number(item.quantity || 1)
+                                        const newQty = Number((currentQty + step).toFixed(2))
+                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                        await refetchItems()
+                                      }}
+                                      className="flex items-center justify-center w-7 h-7 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-colors font-bold text-lg"
+                                    >
+                                      +
+                                    </button>
                                   </div>
 
                                   {/* Total Price */}
-                                  <div className="text-right min-w-[4rem]">
+                                  <div className="text-right min-w-[5rem]">
                                     <div className="text-lg font-bold text-gray-900">
                                       ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
                                     </div>
@@ -816,7 +825,7 @@ export default function InventoryPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDelete(item.id)}
-                                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
