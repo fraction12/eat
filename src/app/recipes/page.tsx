@@ -52,9 +52,7 @@ export default function RecipesPage() {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [feedWarnings, setFeedWarnings] = useState<Record<string, string>>({})
-  const [mealDBRecipes, setMealDBRecipes] = useState<RSSRecipe[]>([])
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
-  const [isLoadingMealDB, setIsLoadingMealDB] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -74,7 +72,6 @@ export default function RecipesPage() {
   useEffect(() => {
     fetchFeeds()
     fetchInventory()
-    fetchMealDBRecipes()
     fetchFavorites()
   }, [])
 
@@ -86,21 +83,6 @@ export default function RecipesPage() {
 
     if (!error && data) {
       setInventory(data as InventoryItem[])
-    }
-  }
-
-  const fetchMealDBRecipes = async () => {
-    setIsLoadingMealDB(true)
-    try {
-      const response = await fetch("/api/themealdb")
-      if (response.ok) {
-        const data = await response.json()
-        setMealDBRecipes(data.recipes || [])
-      }
-    } catch (error) {
-      console.error("Failed to fetch TheMealDB recipes:", error)
-    } finally {
-      setIsLoadingMealDB(false)
     }
   }
 
@@ -390,9 +372,6 @@ export default function RecipesPage() {
       allRecipes.push(...recipesWithSource)
     })
 
-    // Add TheMealDB recipes
-    allRecipes.push(...mealDBRecipes)
-
     return allRecipes
   }
 
@@ -481,7 +460,7 @@ export default function RecipesPage() {
 
   const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
   const top5Recipes = getTop5Recipes()
-  const isLoading = isLoadingFeeds || isLoadingMealDB
+  const isLoading = isLoadingFeeds
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
@@ -492,7 +471,7 @@ export default function RecipesPage() {
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
               <p className="text-gray-600">
-                Discover recipes from RSS feeds and TheMealDB • {feeds.length} feeds active
+                Discover recipes from your favorite RSS feeds • {feeds.length} feeds active
               </p>
             </div>
             <div className="flex gap-3">
@@ -731,7 +710,7 @@ export default function RecipesPage() {
               {total === 0 ? "No recipes found" : "No recipes match your search"}
             </p>
             <p className="text-gray-400 text-sm mt-2">
-              {total === 0 ? "Add RSS feeds or check back later for TheMealDB recipes" : "Try a different search term"}
+              {total === 0 ? "Add RSS feeds to get started" : "Try a different search term"}
             </p>
           </div>
         ) : (
