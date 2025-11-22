@@ -134,6 +134,9 @@ export default function InventoryPage() {
   // Collapsed categories state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set())
 
+  // Local quantity state for responsive UI
+  const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
+
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
   const toggleCategory = (category: Category) => {
@@ -770,10 +773,22 @@ export default function InventoryPage() {
                                       type="number"
                                       min="0.01"
                                       step="1"
-                                      value={item.quantity || 1}
-                                      onChange={async (e) => {
+                                      value={localQuantities[item.id] ?? item.quantity ?? 1}
+                                      onChange={(e) => {
                                         const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                        // Update local state immediately for responsive UI
+                                        setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
+                                      }}
+                                      onBlur={async (e) => {
+                                        const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                        // Save to database when user finishes editing
                                         await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                        // Clear local state and refresh from database
+                                        setLocalQuantities(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
+                                          return updated
+                                        })
                                         await refetchItems()
                                       }}
                                       className="w-20 sm:w-24 h-9 text-sm text-center"
@@ -784,7 +799,7 @@ export default function InventoryPage() {
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     <div className="text-right">
                                       <div className="text-base sm:text-lg font-bold text-gray-900 whitespace-nowrap">
-                                        ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
+                                        ${(Number(item.price) * Number(localQuantities[item.id] ?? item.quantity ?? 1)).toFixed(2)}
                                       </div>
                                     </div>
 
