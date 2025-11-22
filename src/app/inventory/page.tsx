@@ -138,6 +138,10 @@ export default function InventoryPage() {
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
   const [updatingQuantities, setUpdatingQuantities] = useState<Set<string>>(new Set())
 
+  // Local price state for responsive UI
+  const [localPrices, setLocalPrices] = useState<Record<string, number | string>>({})
+  const [updatingPrices, setUpdatingPrices] = useState<Set<string>>(new Set())
+
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
   const toggleCategory = (category: Category) => {
@@ -739,7 +743,8 @@ export default function InventoryPage() {
                           const isNew = daysOld <= 2
                           const isLowStock = item.quantity <= 2
                           const currentQty = localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1
-                          const totalPrice = Number(item.price) * Number(currentQty)
+                          const currentPrice = localPrices[item.id] !== undefined ? localPrices[item.id] : item.price
+                          const totalPrice = Number(currentPrice) * Number(currentQty)
 
                           return (
                             <div
@@ -776,7 +781,99 @@ export default function InventoryPage() {
                                         {currentQty} {item.unit || 'count'}
                                       </span>
                                       <span className="text-gray-400">×</span>
-                                      <span>${Number(item.price).toFixed(2)}</span>
+                                      <div className="relative inline-flex items-center">
+                                        <span className="text-gray-600 mr-0.5">$</span>
+                                        <Input
+                                          type="number"
+                                          min="0.01"
+                                          step="0.01"
+                                          placeholder="0.01"
+                                          value={localPrices[item.id] !== undefined ? localPrices[item.id] : Number(item.price).toFixed(2)}
+                                          onChange={(e) => {
+                                            const value = e.target.value
+                                            if (value === '') {
+                                              setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
+                                              return
+                                            }
+                                            const numValue = parseFloat(value)
+                                            if (!isNaN(numValue)) {
+                                              setLocalPrices(prev => ({ ...prev, [item.id]: numValue }))
+                                            }
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                          onBlur={async (e) => {
+                                            if (!user) return
+
+                                            let newPrice = parseFloat(e.target.value)
+                                            if (isNaN(newPrice) || newPrice <= 0) {
+                                              newPrice = 0.01
+                                            }
+
+                                            newPrice = Math.round(newPrice * 100) / 100
+                                            const originalPrice = Number(item.price)
+
+                                            if (newPrice === originalPrice) {
+                                              setLocalPrices(prev => {
+                                                const updated = { ...prev }
+                                                delete updated[item.id]
+                                                return updated
+                                              })
+                                              return
+                                            }
+
+                                            setUpdatingPrices(prev => new Set(prev).add(item.id))
+
+                                            const { error } = await supabase
+                                              .from("inventory")
+                                              .update({ price: newPrice })
+                                              .eq("id", item.id)
+                                              .eq("user_id", user.id)
+
+                                            setUpdatingPrices(prev => {
+                                              const updated = new Set(prev)
+                                              updated.delete(item.id)
+                                              return updated
+                                            })
+
+                                            if (error) {
+                                              console.error("Error updating price:", error)
+                                              showToast("error", `Failed to update price: ${error.message}`)
+                                              setLocalPrices(prev => {
+                                                const updated = { ...prev }
+                                                delete updated[item.id]
+                                                return updated
+                                              })
+                                            } else {
+                                              setLocalPrices(prev => {
+                                                const updated = { ...prev }
+                                                delete updated[item.id]
+                                                return updated
+                                              })
+                                              await refetchItems()
+                                              showToast("success", "Price updated")
+                                            }
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                              e.preventDefault()
+                                            }
+                                            if (e.key === 'Enter') {
+                                              e.currentTarget.blur()
+                                            }
+                                            if ((e.key === 'Delete' || e.key === 'Backspace') &&
+                                                e.currentTarget.selectionStart === 0 &&
+                                                e.currentTarget.selectionEnd === e.currentTarget.value.length) {
+                                              e.preventDefault()
+                                              setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
+                                            }
+                                          }}
+                                          disabled={updatingPrices.has(item.id)}
+                                          className={`w-16 h-6 px-1 text-sm text-center border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                            updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white hover:bg-gray-50'
+                                          }`}
+                                          title="Edit price"
+                                        />
+                                      </div>
                                     </div>
                                     <div className="text-gray-400">•</div>
                                     <div className="font-semibold text-gray-900">
