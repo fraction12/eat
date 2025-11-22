@@ -114,18 +114,103 @@ export default function RecipesPage() {
   }
 
   const addDefaultFeed = async () => {
+    const defaultFeeds = [
+      {
+        feedUrl: "https://www.bonappetit.com/feed/recipes-rss-feed/rss",
+        feedName: "Bon Appétit",
+        feedDescription: "Award-winning recipes from Bon Appétit magazine",
+      },
+      {
+        feedUrl: "https://www.foodnetwork.com/feeds/rss/recipes",
+        feedName: "Food Network",
+        feedDescription: "Popular recipes from Food Network chefs",
+      },
+      {
+        feedUrl: "https://www.seriouseats.com/feed",
+        feedName: "Serious Eats",
+        feedDescription: "Science-backed recipes and cooking techniques",
+      },
+      {
+        feedUrl: "https://www.epicurious.com/services/rss/recipes",
+        feedName: "Epicurious",
+        feedDescription: "Recipes from Epicurious and Condé Nast",
+      },
+      {
+        feedUrl: "https://www.bbcgoodfood.com/rss/recipes",
+        feedName: "BBC Good Food",
+        feedDescription: "Trusted recipes from BBC Good Food",
+      },
+      {
+        feedUrl: "https://www.jamieoliver.com/feeds/recipes/",
+        feedName: "Jamie Oliver",
+        feedDescription: "Delicious recipes from Jamie Oliver",
+      },
+      {
+        feedUrl: "https://food52.com/recipes.rss",
+        feedName: "Food52",
+        feedDescription: "Community recipes and cooking inspiration",
+      },
+      {
+        feedUrl: "https://www.simplyrecipes.com/feed/",
+        feedName: "Simply Recipes",
+        feedDescription: "Simple, tested, and trusted recipes",
+      },
+      {
+        feedUrl: "https://thepioneerwoman.com/food-cooking/recipes/feed/",
+        feedName: "The Pioneer Woman",
+        feedDescription: "Comfort food recipes from Ree Drummond",
+      },
+      {
+        feedUrl: "https://minimalistbaker.com/feed/",
+        feedName: "Minimalist Baker",
+        feedDescription: "Simple recipes requiring 10 ingredients or less",
+      },
+      {
+        feedUrl: "https://www.budgetbytes.com/feed/",
+        feedName: "Budget Bytes",
+        feedDescription: "Delicious recipes on a budget",
+      },
+      {
+        feedUrl: "https://smittenkitchen.com/feed/",
+        feedName: "Smitten Kitchen",
+        feedDescription: "Fearless cooking from a tiny kitchen",
+      },
+      {
+        feedUrl: "https://www.allrecipes.com/recipes/rss/",
+        feedName: "Allrecipes",
+        feedDescription: "Home cooking recipes from the community",
+      },
+      {
+        feedUrl: "https://www.taste.com.au/recipes/collections/rss",
+        feedName: "Taste.com.au",
+        feedDescription: "Australian recipes and cooking ideas",
+      },
+      {
+        feedUrl: "https://www.delish.com/rss/all.xml/",
+        feedName: "Delish",
+        feedDescription: "Fun and easy recipes for every occasion",
+      },
+    ]
+
+    console.log("Adding 15 default recipe feeds...")
+
+    // Add all feeds in parallel
     try {
-      await fetch("/api/feeds", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          feedUrl: "https://www.bonappetit.com/feed/recipes-rss-feed/rss",
-          feedName: "Bon Appétit",
-          feedDescription: "Award-winning recipes from Bon Appétit magazine",
-        }),
-      })
+      await Promise.all(
+        defaultFeeds.map(async (feed) => {
+          try {
+            await fetch("/api/feeds", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(feed),
+            })
+          } catch (error) {
+            console.error(`Failed to add feed: ${feed.feedName}`, error)
+          }
+        })
+      )
     } catch (error) {
-      console.error("Failed to add default feed:", error)
+      console.error("Failed to add default feeds:", error)
     }
   }
 
