@@ -655,7 +655,7 @@ export default function InventoryPage() {
                         onClick={() => toggleCategory(category as Category)}
                         className={`w-full px-6 py-4 bg-white ${colors.borderLeft} hover:bg-gray-50 transition-colors`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pr-2">
                           <div className="flex items-center gap-3">
                             <Icon className={`h-6 w-6 ${colors.iconColor}`} />
                             <h3 className="text-lg font-bold text-gray-800 capitalize">{category}</h3>
@@ -663,11 +663,13 @@ export default function InventoryPage() {
                               {categoryItems.length}
                             </span>
                           </div>
-                          {isCollapsed ? (
-                            <ChevronDown className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <ChevronUp className="h-5 w-5 text-gray-500" />
-                          )}
+                          <div className="flex items-center justify-center w-8">
+                            {isCollapsed ? (
+                              <ChevronDown className="h-5 w-5 text-gray-500" />
+                            ) : (
+                              <ChevronUp className="h-5 w-5 text-gray-500" />
+                            )}
+                          </div>
                         </div>
                       </button>
 
@@ -730,7 +732,8 @@ export default function InventoryPage() {
                                     <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
                                       <button
                                         onClick={async () => {
-                                          const newQty = Math.max(0.01, (item.quantity || 1) - (item.unit === 'count' ? 1 : 0.1))
+                                          const step = item.unit === 'count' ? 1 : 0.1
+                                          const newQty = Math.max(0.01, Number(((item.quantity || 1) - step).toFixed(2)))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
                                           const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
                                           setItems((data ?? []) as Item[])
@@ -739,12 +742,13 @@ export default function InventoryPage() {
                                       >
                                         −
                                       </button>
-                                      <span className="font-bold text-gray-900 min-w-[3rem] text-center">
-                                        {item.quantity || 1} {item.unit || 'count'}
+                                      <span className="font-bold text-gray-900 min-w-[4rem] text-center text-sm">
+                                        {item.unit === 'count' ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
                                       </span>
                                       <button
                                         onClick={async () => {
-                                          const newQty = (item.quantity || 1) + (item.unit === 'count' ? 1 : 0.1)
+                                          const step = item.unit === 'count' ? 1 : 0.1
+                                          const newQty = Number(((item.quantity || 1) + step).toFixed(2))
                                           await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
                                           const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
                                           setItems((data ?? []) as Item[])
