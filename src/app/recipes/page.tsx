@@ -59,7 +59,7 @@ export default function RecipesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const recipesPerPage = 50
+  const recipesPerPage = 10
 
   // Sorting and filtering
   const [sortBy, setSortBy] = useState<"match" | "name" | "source" | "date">("match")
@@ -473,7 +473,14 @@ export default function RecipesPage() {
     window.open(random.link, "_blank")
   }
 
+  // Get top 5 featured recipes
+  const getTop5Recipes = () => {
+    const { allRecipes } = getPaginatedRecipes()
+    return allRecipes.slice(0, 5)
+  }
+
   const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
+  const top5Recipes = getTop5Recipes()
   const isLoading = isLoadingFeeds || isLoadingMealDB
 
   return (
@@ -504,7 +511,105 @@ export default function RecipesPage() {
               </Button>
             </div>
           </div>
+        </div>
 
+        {/* Top 5 Featured Recipes */}
+        {!isLoading && top5Recipes.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-orange-500" />
+              Top Picks For You
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {top5Recipes.map((recipe, idx) => {
+                const matchCount = canMakeRecipe(recipe)
+                const canMake = matchCount > 0
+                const favorited = isFavorite(recipe.link)
+
+                return (
+                  <div
+                    key={idx}
+                    className={`group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ${
+                      canMake ? 'ring-2 ring-green-400' : ''
+                    }`}
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={recipe.image}
+                        alt={recipe.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"
+                        }}
+                      />
+
+                      {/* Favorite Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          toggleFavorite(recipe)
+                        }}
+                        className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all ${
+                          favorited
+                            ? "bg-white/90 text-red-500"
+                            : "bg-black/30 text-white hover:bg-white/90 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart className={`h-5 w-5 ${favorited ? "fill-current" : ""}`} />
+                      </button>
+
+                      {/* Match Badge */}
+                      {canMake && (
+                        <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                          <Check className="h-3 w-3" />
+                          {matchCount} match{matchCount > 1 ? 'es' : ''}
+                        </div>
+                      )}
+
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 text-sm leading-tight">
+                        {recipe.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        {recipe.category && (
+                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                            {recipe.category}
+                          </span>
+                        )}
+                        {recipe.source && (
+                          <span className="text-xs text-gray-500 truncate">
+                            {recipe.source}
+                          </span>
+                        )}
+                      </div>
+
+                      <a
+                        href={recipe.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                      >
+                        <ChefHat className="h-4 w-4" />
+                        Cook This
+                      </a>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filters Section */}
+        <div className="mb-8">
           {/* Search Bar */}
           <div className="relative max-w-2xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
