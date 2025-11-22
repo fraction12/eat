@@ -807,13 +807,21 @@ export default function InventoryPage() {
                                   step="0.01"
                                   value={localQuantities[item.id] ?? item.quantity ?? 1}
                                   onChange={(e) => {
-                                    const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                    const value = e.target.value
+                                    // Allow empty string during typing
+                                    if (value === '') {
+                                      setLocalQuantities(prev => ({ ...prev, [item.id]: 0.01 }))
+                                      return
+                                    }
+                                    const newQty = Math.max(0.01, Number(value) || 0.01)
                                     setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
                                   }}
                                   onBlur={async (e) => {
                                     if (!user) return
 
-                                    const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                    let newQty = Number(e.target.value) || 0.01
+                                    // Ensure minimum value and round to 2 decimals
+                                    newQty = Math.max(0.01, Math.round(newQty * 100) / 100)
                                     const originalQty = item.quantity ?? 1
 
                                     // Skip update if value hasn't changed
@@ -860,6 +868,16 @@ export default function InventoryPage() {
                                       })
                                       await refetchItems()
                                       showToast("success", "Quantity updated")
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    // Prevent negative values
+                                    if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                      e.preventDefault()
+                                    }
+                                    // Submit on Enter
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur()
                                     }
                                   }}
                                   disabled={updatingQuantities.has(item.id)}

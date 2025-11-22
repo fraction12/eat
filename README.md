@@ -71,9 +71,20 @@ npm run dev
 
 The app uses three main Supabase tables:
 
-- **inventory**: Stores user items with quantities, prices, categories, and units
+- **inventory**: Stores user items with quantities (NUMERIC), prices, categories, and units
 - **recipe_feeds**: User's RSS feed subscriptions
 - **favorite_recipes**: Saved favorite recipes
+
+### Database Migration
+
+If you're setting up a new database, run the migration file to ensure decimal quantities work:
+
+```bash
+# In your Supabase SQL editor, run:
+supabase-migration-quantity-decimal.sql
+```
+
+This changes the `quantity` column from INTEGER to NUMERIC(10,2) to support decimal values like 0.5, 1.25, etc.
 
 ## Testing
 
