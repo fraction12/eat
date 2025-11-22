@@ -199,6 +199,12 @@ export default function InventoryPage() {
     showToast("success", "Category updated")
   }
 
+  const handleUnitChange = async (id: string, newUnit: string) => {
+    await supabase.from("inventory").update({ unit: newUnit }).eq("id", id)
+    await refetchItems()
+    showToast("success", "Unit updated")
+  }
+
   const fileToDataURL = (f: File) =>
     new Promise<string>((resolve) => {
       const reader = new FileReader()
@@ -750,6 +756,16 @@ export default function InventoryPage() {
                                       <option value="pantry">🥫 Pantry</option>
                                       <option value="frozen">🧊 Frozen</option>
                                       <option value="condiments">🧂 Condiments</option>
+                                    </select>
+                                    <span>•</span>
+                                    <select
+                                      value={item.unit || 'count'}
+                                      onChange={(e) => handleUnitChange(item.id, e.target.value)}
+                                      className="text-xs px-2 py-1 border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                      {unitOptions.map(opt => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                      ))}
                                     </select>
                                   </div>
                                 </div>
