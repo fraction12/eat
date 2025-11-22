@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Plus, Folder, Trash2, Edit2, Check } from "lucide-react"
+import { X, Plus, Folder, Trash2, Edit2, Check, ArrowLeft, ExternalLink, ChefHat } from "lucide-react"
 import { showToast } from "@/components/Toast"
 
 type Collection = {
@@ -14,6 +14,15 @@ type Collection = {
   color: string
   recipe_count?: number
   created_at: string
+}
+
+type CollectionRecipe = {
+  id: string
+  recipe_url: string
+  recipe_title: string
+  recipe_image: string | null
+  recipe_source: string | null
+  added_at: string
 }
 
 type CollectionsModalProps = {
@@ -33,6 +42,11 @@ export function CollectionsModal({
   const [isLoading, setIsLoading] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // Viewing collection recipes
+  const [viewingCollection, setViewingCollection] = useState<Collection | null>(null)
+  const [collectionRecipes, setCollectionRecipes] = useState<CollectionRecipe[]>([])
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState(false)
 
   // New collection form
   const [newName, setNewName] = useState("")
@@ -121,10 +135,53 @@ export function CollectionsModal({
     }
   }
 
+  const viewCollectionRecipes = async (collection: Collection) => {
+    setViewingCollection(collection)
+    setIsLoadingRecipes(true)
+
+    try {
+      const response = await fetch(`/api/collections/recipes?collection_id=${collection.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setCollectionRecipes(data.recipes || [])
+      } else {
+        showToast("error", "Failed to load recipes")
+      }
+    } catch (error) {
+      console.error("Failed to fetch collection recipes:", error)
+      showToast("error", "Failed to load recipes")
+    } finally {
+      setIsLoadingRecipes(false)
+    }
+  }
+
+  const removeRecipeFromCollection = async (recipeId: string) => {
+    if (!viewingCollection) return
+
+    try {
+      const response = await fetch(
+        `/api/collections/recipes?id=${recipeId}&collection_id=${viewingCollection.id}`,
+        { method: "DELETE" }
+      )
+
+      if (response.ok) {
+        setCollectionRecipes(collectionRecipes.filter(r => r.id !== recipeId))
+        showToast("success", "Recipe removed from collection")
+      } else {
+        showToast("error", "Failed to remove recipe")
+      }
+    } catch (error) {
+      console.error("Failed to remove recipe:", error)
+      showToast("error", "Failed to remove recipe")
+    }
+  }
+
   const handleCollectionClick = (collection: Collection) => {
     if (mode === "select" && onCollectionSelect) {
       onCollectionSelect(collection)
       onClose()
+    } else if (mode === "manage") {
+      viewCollectionRecipes(collection)
     }
   }
 
@@ -135,15 +192,31 @@ export function CollectionsModal({
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {mode === "select" ? "Save to Collection" : "My Collections"}
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {mode === "select"
-                ? "Choose a collection to save this recipe"
-                : "Organize your favorite recipes"}
-            </p>
+          <div className="flex items-center gap-3">
+            {viewingCollection && (
+              <button
+                onClick={() => setViewingCollection(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {viewingCollection
+                  ? viewingCollection.name
+                  : mode === "select"
+                  ? "Save to Collection"
+                  : "My Collections"}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {viewingCollection
+                  ? `${collectionRecipes.length} recipe${collectionRecipes.length !== 1 ? 's' : ''}`
+                  : mode === "select"
+                  ? "Choose a collection to save this recipe"
+                  : "Organize your favorite recipes"}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -155,6 +228,66 @@ export function CollectionsModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {viewingCollection ? (
+            /* Show recipes in collection */
+            isLoadingRecipes ? (
+              <div className="text-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
+                <p className="mt-2 text-gray-600">Loading recipes...</p>
+              </div>
+            ) : collectionRecipes.length === 0 ? (
+              <div className="text-center py-12">
+                <Folder className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">No recipes in this collection yet</p>
+                <p className="text-sm text-gray-400 mt-1">Use the bookmark button on recipes to add them here</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {collectionRecipes.map((recipe) => (
+                  <div
+                    key={recipe.id}
+                    className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all"
+                  >
+                    <div className="relative h-40">
+                      <img
+                        src={recipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3C/svg%3E"}
+                        alt={recipe.recipe_title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
+                        {recipe.recipe_title}
+                      </h4>
+                      {recipe.recipe_source && (
+                        <p className="text-xs text-gray-500 mb-3">{recipe.recipe_source}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <a
+                          href={recipe.recipe_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-semibold"
+                        >
+                          <ChefHat className="h-3.5 w-3.5" />
+                          Cook
+                        </a>
+                        <button
+                          onClick={() => removeRecipeFromCollection(recipe.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove from collection"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            /* Show collections list */
+            <>
           {/* Create New Collection */}
           {!isCreating ? (
             <Button
@@ -304,6 +437,8 @@ export function CollectionsModal({
                 </div>
               ))}
             </div>
+          )}
+          </>
           )}
         </div>
       </div>
