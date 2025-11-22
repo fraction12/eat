@@ -769,7 +769,7 @@ export default function InventoryPage() {
                                     <Input
                                       type="number"
                                       min="0.01"
-                                      step="0.01"
+                                      step="1"
                                       value={item.quantity || 1}
                                       onChange={async (e) => {
                                         const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
