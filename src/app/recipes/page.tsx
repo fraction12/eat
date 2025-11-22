@@ -601,112 +601,183 @@ export default function RecipesPage() {
         )}
 
         {/* Search and Filters Section */}
-        <div className="mb-8">
+        <div className="mb-8 bg-white rounded-2xl shadow-lg p-6">
           {/* Search Bar */}
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search recipes by name or ingredients..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1) // Reset to first page on search
-              }}
-              className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-orange-500"
-            />
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search recipes by name or ingredients..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-orange-500"
+              />
+            </div>
             {inventory.length > 0 && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">
+              <div className="mt-3 flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg w-fit">
                 <Check className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700">{inventory.length} items in inventory</span>
+                <span className="text-sm font-medium text-green-700">
+                  {inventory.length} ingredient{inventory.length !== 1 ? 's' : ''} in your inventory
+                </span>
               </div>
             )}
           </div>
 
-          {/* Filters and Actions */}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={getRandomRecipe}
-                variant="outline"
-                size="sm"
-                className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 hover:from-orange-600 hover:to-pink-600"
-              >
-                <Sparkles className="h-4 w-4" />
-                Surprise Me!
-              </Button>
+          {/* Filters Row */}
+          <div className="border-t border-gray-200 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              {/* Sort By */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  Sort By
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value as any)
+                    setCurrentPage(1)
+                  }}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                >
+                  <option value="match">Best Match</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="source">Source</option>
+                  <option value="date">Newest First</option>
+                </select>
+              </div>
 
-              <Button
-                onClick={() => {
-                  setShowFavoritesOnly(!showFavoritesOnly)
-                  setCurrentPage(1)
-                }}
-                variant={showFavoritesOnly ? "default" : "outline"}
-                size="sm"
-                className="gap-2"
-              >
-                <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
-                Favorites ({favorites.length})
-              </Button>
+              {/* Filter by Source */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+                  <Filter className="h-3.5 w-3.5" />
+                  Source
+                </label>
+                <select
+                  value={filterSource}
+                  onChange={(e) => {
+                    setFilterSource(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                >
+                  <option value="all">All Sources ({availableSources.length})</option>
+                  {availableSources.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter by Category */}
+              {availableCategories.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+                    <Filter className="h-3.5 w-3.5" />
+                    Category
+                  </label>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => {
+                      setFilterCategory(e.target.value)
+                      setCurrentPage(1)
+                    }}
+                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    <option value="all">All Categories</option>
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Quick Actions in grid */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                  Quick Actions
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setShowFavoritesOnly(!showFavoritesOnly)
+                      setCurrentPage(1)
+                    }}
+                    variant={showFavoritesOnly ? "default" : "outline"}
+                    size="sm"
+                    className="gap-1.5 flex-1"
+                  >
+                    <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                    <span className="hidden sm:inline">Favorites</span>
+                    <span className="text-xs">({favorites.length})</span>
+                  </Button>
+                  <Button
+                    onClick={getRandomRecipe}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 hover:from-orange-600 hover:to-pink-600"
+                    title="Get a random recipe"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
 
-            {/* Sort By */}
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-gray-500" />
-              <select
-                value={sortBy}
-                onChange={(e) => {
-                  setSortBy(e.target.value as any)
-                  setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="match">Best Match</option>
-                <option value="name">Name (A-Z)</option>
-                <option value="source">Source</option>
-                <option value="date">Newest First</option>
-              </select>
-            </div>
-
-            {/* Filter by Source */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select
-                value={filterSource}
-                onChange={(e) => {
-                  setFilterSource(e.target.value)
-                  setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="all">All Sources ({total})</option>
-                {availableSources.map((source) => (
-                  <option key={source} value={source}>
-                    {source}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filter by Category */}
-            {availableCategories.length > 0 && (
-              <select
-                value={filterCategory}
-                onChange={(e) => {
-                  setFilterCategory(e.target.value)
-                  setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="all">All Categories</option>
-                {availableCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+            {/* Active Filters & Clear */}
+            {(searchQuery || filterSource !== "all" || filterCategory !== "all" || showFavoritesOnly) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-gray-500">Active filters:</span>
+                {searchQuery && (
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
+                    Search: "{searchQuery}"
+                  </span>
+                )}
+                {filterSource !== "all" && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                    Source: {filterSource}
+                  </span>
+                )}
+                {filterCategory !== "all" && (
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                    Category: {filterCategory}
+                  </span>
+                )}
+                {showFavoritesOnly && (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Heart className="h-3 w-3 fill-current" />
+                    Favorites only
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchQuery("")
+                    setFilterSource("all")
+                    setFilterCategory("all")
+                    setShowFavoritesOnly(false)
+                    setCurrentPage(1)
+                  }}
+                  className="text-xs text-gray-600 hover:text-gray-900 underline ml-2"
+                >
+                  Clear all filters
+                </button>
+              </div>
             )}
+          </div>
+
+          {/* Results Summary */}
+          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Showing <span className="font-semibold text-gray-900">{total}</span> recipe{total !== 1 ? 's' : ''}
+              {searchQuery && <span> matching "{searchQuery}"</span>}
+            </p>
           </div>
         </div>
 
@@ -728,38 +799,26 @@ export default function RecipesPage() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {/* Table Header with Count */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  All Recipes ({total} total)
-                </h2>
-                <div className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-              </div>
-            </div>
-
             {/* Recipe Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                       Recipe
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell">
                       Source
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ingredients Match
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell">
+                      Match
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {paginatedRecipes.map((recipe, idx) => {
                     const matchCount = canMakeRecipe(recipe)
                     const canMake = matchCount > 0
@@ -767,87 +826,103 @@ export default function RecipesPage() {
                     return (
                       <tr
                         key={idx}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          canMake ? 'bg-green-50/50' : ''
-                        }`}
+                        className={`transition-all duration-150 ${
+                          idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                        } ${
+                          canMake ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-transparent'
+                        } hover:bg-orange-50/30 hover:shadow-sm`}
                       >
                         {/* Recipe Info */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={recipe.image}
-                              alt={recipe.title}
-                              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect fill='%23e5e7eb' width='64' height='64'/%3E%3C/svg%3E"
-                              }}
-                            />
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src={recipe.image}
+                                alt={recipe.title}
+                                className="w-14 h-14 rounded-lg object-cover shadow-sm ring-1 ring-gray-200"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect fill='%23e5e7eb' width='64' height='64'/%3E%3C/svg%3E"
+                                }}
+                              />
+                              {canMake && (
+                                <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow">
+                                  {matchCount}
+                                </div>
+                              )}
+                            </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 line-clamp-1">
+                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-1 mb-0.5">
                                 {recipe.title}
                               </h3>
-                              <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                              <p className="text-xs text-gray-600 line-clamp-1">
                                 {recipe.description}
                               </p>
-                              {recipe.category && (
-                                <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
-                                  {recipe.category}
+                              <div className="flex items-center gap-2 mt-1">
+                                {recipe.category && (
+                                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">
+                                    {recipe.category}
+                                  </span>
+                                )}
+                                <span className="text-xs text-gray-500 md:hidden">
+                                  {recipe.source || "Unknown"}
                                 </span>
-                              )}
+                              </div>
                             </div>
                           </div>
                         </td>
 
                         {/* Source */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{recipe.source || "Unknown"}</span>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="text-sm font-medium text-gray-900">
+                            {recipe.source || "Unknown"}
+                          </div>
                           {recipe.area && (
-                            <p className="text-xs text-gray-500 mt-1">{recipe.area}</p>
+                            <div className="text-xs text-gray-500 mt-0.5">{recipe.area}</div>
                           )}
                         </td>
 
                         {/* Ingredients Match */}
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3 text-center hidden lg:table-cell">
                           {canMake ? (
-                            <div className="flex items-center gap-1.5 text-green-700">
-                              <Check className="h-4 w-4" />
-                              <span className="text-sm font-semibold">
-                                {matchCount} {matchCount === 1 ? 'match' : 'matches'}
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full">
+                              <Check className="h-3.5 w-3.5" />
+                              <span className="text-xs font-bold">
+                                {matchCount}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-400">-</span>
+                            <span className="text-xs text-gray-400">—</span>
                           )}
                         </td>
 
-                        {/* Action */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
                                 toggleFavorite(recipe)
                               }}
-                              className={`p-2 rounded-full transition-all ${
+                              className={`p-2 rounded-lg transition-all ${
                                 isFavorite(recipe.link)
-                                  ? "text-red-500 hover:bg-red-50"
-                                  : "text-gray-400 hover:text-red-500 hover:bg-gray-50"
+                                  ? "text-red-500 bg-red-50 hover:bg-red-100"
+                                  : "text-gray-400 hover:text-red-500 hover:bg-red-50"
                               }`}
                               title={isFavorite(recipe.link) ? "Remove from favorites" : "Add to favorites"}
                             >
                               <Heart
-                                className={`h-5 w-5 ${isFavorite(recipe.link) ? "fill-current" : ""}`}
+                                className={`h-4 w-4 ${isFavorite(recipe.link) ? "fill-current" : ""}`}
                               />
                             </button>
                             <a
                               href={recipe.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 hover:shadow-md transition-all text-xs font-semibold"
                             >
-                              <ChefHat className="h-4 w-4" />
-                              Cook This
+                              <ChefHat className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Cook</span>
                             </a>
                           </div>
                         </td>
@@ -860,11 +935,12 @@ export default function RecipesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Showing {(currentPage - 1) * recipesPerPage + 1} to{" "}
-                    {Math.min(currentPage * recipesPerPage, total)} of {total} recipes
+              <div className="px-6 py-4 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-orange-50/30">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">
+                    Showing <span className="text-orange-600 font-bold">{(currentPage - 1) * recipesPerPage + 1}</span> to{" "}
+                    <span className="text-orange-600 font-bold">{Math.min(currentPage * recipesPerPage, total)}</span> of{" "}
+                    <span className="text-orange-600 font-bold">{total}</span> recipes
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -872,6 +948,7 @@ export default function RecipesPage() {
                       size="sm"
                       onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
+                      className="text-xs"
                     >
                       Previous
                     </Button>
@@ -894,7 +971,9 @@ export default function RecipesPage() {
                             variant={currentPage === pageNum ? "default" : "outline"}
                             size="sm"
                             onClick={() => setCurrentPage(pageNum)}
-                            className="w-10"
+                            className={`w-8 h-8 p-0 text-xs ${
+                              currentPage === pageNum ? "bg-orange-500 hover:bg-orange-600" : ""
+                            }`}
                           >
                             {pageNum}
                           </Button>
@@ -906,6 +985,7 @@ export default function RecipesPage() {
                       size="sm"
                       onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
+                      className="text-xs"
                     >
                       Next
                     </Button>
