@@ -3,11 +3,79 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Trash2, Plus, Camera, Upload, Scan } from "lucide-react"
+import {
+  Loader2, Trash2, Plus, Camera, Upload, Scan, Search, ChefHat,
+  Apple, Milk, Beef, Croissant, Package, Snowflake, Droplet,
+  AlertCircle, Clock, ArrowRight, Filter, X
+} from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import ReactWebcam from "react-webcam"
+import { ToastContainer, showToast } from "@/components/Toast"
+import Link from "next/link"
 
 type Item = { id: string; item: string; price: number; quantity: number; created_at: string }
+
+type Category = 'produce' | 'dairy' | 'meat' | 'bakery' | 'pantry' | 'frozen' | 'condiments'
+
+const categoryIcons: Record<Category, any> = {
+  produce: Apple,
+  dairy: Milk,
+  meat: Beef,
+  bakery: Croissant,
+  pantry: Package,
+  frozen: Snowflake,
+  condiments: Droplet,
+}
+
+const categoryColors: Record<Category, string> = {
+  produce: 'bg-green-100 text-green-700 border-green-200',
+  dairy: 'bg-blue-100 text-blue-700 border-blue-200',
+  meat: 'bg-red-100 text-red-700 border-red-200',
+  bakery: 'bg-amber-100 text-amber-700 border-amber-200',
+  pantry: 'bg-purple-100 text-purple-700 border-purple-200',
+  frozen: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  condiments: 'bg-orange-100 text-orange-700 border-orange-200',
+}
+
+// Categorize items based on name
+function categorizeItem(itemName: string): Category {
+  const name = itemName.toLowerCase()
+
+  // Produce
+  const produce = ['apple', 'banana', 'orange', 'tomato', 'lettuce', 'carrot', 'potato', 'onion', 'garlic', 'pepper', 'broccoli', 'spinach', 'cucumber', 'avocado', 'strawberry', 'grape', 'lemon', 'lime', 'berry', 'fruit', 'vegetable', 'salad', 'celery', 'mushroom', 'corn', 'peas']
+  if (produce.some(item => name.includes(item))) return 'produce'
+
+  // Dairy
+  const dairy = ['milk', 'cheese', 'yogurt', 'butter', 'cream', 'egg', 'cottage', 'cheddar', 'mozzarella', 'parmesan', 'sour cream', 'whipped cream']
+  if (dairy.some(item => name.includes(item))) return 'dairy'
+
+  // Meat & Seafood
+  const meat = ['chicken', 'beef', 'pork', 'turkey', 'bacon', 'sausage', 'ham', 'steak', 'fish', 'salmon', 'tuna', 'shrimp', 'meat', 'ground beef', 'lamb', 'duck']
+  if (meat.some(item => name.includes(item))) return 'meat'
+
+  // Bakery
+  const bakery = ['bread', 'bagel', 'muffin', 'croissant', 'donut', 'bun', 'roll', 'tortilla', 'pita', 'baguette', 'cake', 'cookie', 'pastry']
+  if (bakery.some(item => name.includes(item))) return 'bakery'
+
+  // Frozen
+  const frozen = ['frozen', 'ice cream', 'popsicle', 'ice', 'pizza']
+  if (frozen.some(item => name.includes(item))) return 'frozen'
+
+  // Condiments
+  const condiments = ['sauce', 'ketchup', 'mustard', 'mayo', 'dressing', 'oil', 'vinegar', 'salt', 'pepper', 'spice', 'seasoning', 'syrup', 'jam', 'jelly', 'honey', 'salsa', 'hot sauce']
+  if (condiments.some(item => name.includes(item))) return 'condiments'
+
+  // Default to pantry
+  return 'pantry'
+}
+
+// Calculate days since added
+function getDaysOld(createdAt: string): number {
+  const created = new Date(createdAt)
+  const now = new Date()
+  const diff = now.getTime() - created.getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
 
 export default function InventoryPage() {
   const [isScanning, setIsScanning] = useState(false)
@@ -25,6 +93,10 @@ export default function InventoryPage() {
   const [manualPrice, setManualPrice] = useState("")
   const [manualQuantity, setManualQuantity] = useState("1")
   const [isAdding, setIsAdding] = useState(false)
+
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterCategory, setFilterCategory] = useState<Category | 'all'>('all')
 
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
@@ -44,6 +116,7 @@ export default function InventoryPage() {
   const handleDelete = async (id: string) => {
     await supabase.from("inventory").delete().eq("id", id)
     setItems((prev) => prev.filter((i) => i.id !== id))
+    showToast("success", "Item removed from inventory")
   }
 
   const fileToDataURL = (f: File) =>
@@ -115,7 +188,7 @@ export default function InventoryPage() {
 
   const handleManualAdd = async () => {
     if (!manualItem.trim()) {
-      alert("Please enter an item name")
+      showToast("error", "Please enter an item name")
       return
     }
 
@@ -134,7 +207,7 @@ export default function InventoryPage() {
     if (!saveRes.ok) {
       const errText = await saveRes.text()
       console.error("Save route error:", saveRes.status, errText)
-      alert(`Save failed (${saveRes.status}). Check console for details.`)
+      showToast("error", `Save failed (${saveRes.status})`)
       setIsAdding(false)
       return
     }
@@ -151,22 +224,96 @@ export default function InventoryPage() {
     setManualPrice("")
     setManualQuantity("1")
     setIsAdding(false)
+    showToast("success", "Item added to inventory!")
+  }
+
+  // Filter and search items
+  const filteredItems = items.filter(item => {
+    // Search filter
+    if (searchQuery && !item.item.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false
+    }
+    // Category filter
+    if (filterCategory !== 'all' && categorizeItem(item.item) !== filterCategory) {
+      return false
+    }
+    return true
+  })
+
+  // Group items by category
+  const itemsByCategory = filteredItems.reduce((acc, item) => {
+    const category = categorizeItem(item.item)
+    if (!acc[category]) acc[category] = []
+    acc[category].push(item)
+    return acc
+  }, {} as Record<Category, Item[]>)
+
+  // Calculate stats
+  const stats = {
+    totalItems: items.length,
+    totalValue: total,
+    recentItems: items.filter(item => getDaysOld(item.created_at) <= 2).length,
+    lowStock: items.filter(item => item.quantity <= 2).length,
+    categories: Object.keys(itemsByCategory).length,
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Inventory</h1>
-          <p className="text-gray-600">Scan receipts or add items manually to track your groceries</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Kitchen Inventory</h1>
+          <p className="text-gray-600">Track what you have • Find what you can make • Never forget what you bought</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        {/* Quick Stats Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
+            <div className="text-sm text-gray-600 mb-1">Total Items</div>
+            <div className="text-3xl font-bold text-gray-900">{stats.totalItems}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
+            <div className="text-sm text-gray-600 mb-1">Categories</div>
+            <div className="text-3xl font-bold text-gray-900">{stats.categories}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-500">
+            <div className="text-sm text-gray-600 mb-1">Recently Added</div>
+            <div className="text-3xl font-bold text-gray-900">{stats.recentItems}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-red-500">
+            <div className="text-sm text-gray-600 mb-1">Running Low</div>
+            <div className="text-3xl font-bold text-gray-900">{stats.lowStock}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
+            <div className="text-sm text-gray-600 mb-1">Total Value</div>
+            <div className="text-3xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</div>
+          </div>
+        </div>
+
+        {/* Recipe Suggestion Widget */}
+        {stats.totalItems > 0 && (
+          <div className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl shadow-xl p-6 mb-8 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Ready to Cook?</h2>
+                <p className="text-white/90">You have {stats.totalItems} ingredients. Let's find recipes you can make!</p>
+              </div>
+              <Link href="/recipes">
+                <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+                  <ChefHat className="mr-2 h-5 w-5" />
+                  Find Recipes
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-8">
           {/* Left: Add Items */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              {/* Tabs */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-4">
+              {/* Same tabs and content as before */}
               <div className="flex border-b border-gray-200">
                 <button
                   onClick={() => setActiveTab('scan')}
@@ -192,7 +339,6 @@ export default function InventoryPage() {
                 </button>
               </div>
 
-              {/* Tab Content */}
               <div className="p-6">
                 {activeTab === 'scan' ? (
                   <div className="space-y-4">
@@ -339,81 +485,179 @@ export default function InventoryPage() {
 
           {/* Right: Inventory Display */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Current Items</h2>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Total Value</p>
-                  <p className="text-3xl font-bold text-green-600">${total.toFixed(2)}</p>
+            {/* Search and Filter Bar */}
+            <div className="bg-white rounded-2xl shadow-lg p-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search items..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value as Category | 'all')}
+                    className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="produce">🥬 Produce</option>
+                    <option value="dairy">🥛 Dairy</option>
+                    <option value="meat">🥩 Meat</option>
+                    <option value="bakery">🍞 Bakery</option>
+                    <option value="pantry">🥫 Pantry</option>
+                    <option value="frozen">🧊 Frozen</option>
+                    <option value="condiments">🧂 Condiments</option>
+                  </select>
+                  {(searchQuery || filterCategory !== 'all') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setFilterCategory('all')
+                      }}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear
+                    </Button>
+                  )}
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {items.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400 text-lg">No items yet</p>
-                    <p className="text-gray-400 text-sm mt-2">Add items to get started!</p>
-                  </div>
-                ) : (
-                  items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{item.item}</h3>
-                        <p className="text-sm text-gray-500">
-                          ${Number(item.price).toFixed(2)} each • Added {new Date(item.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-gray-300">
-                          <button
-                            onClick={async () => {
-                              const newQty = Math.max(1, (item.quantity || 1) - 1)
-                              await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                              const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                              setItems((data ?? []) as Item[])
-                            }}
-                            className="text-gray-600 hover:text-gray-900 font-bold text-lg"
-                          >
-                            −
-                          </button>
-                          <span className="font-semibold text-gray-900 min-w-[2rem] text-center">
-                            {item.quantity || 1}
-                          </span>
-                          <button
-                            onClick={async () => {
-                              const newQty = (item.quantity || 1) + 1
-                              await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                              const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
-                              setItems((data ?? []) as Item[])
-                            }}
-                            className="text-gray-600 hover:text-gray-900 font-bold text-lg"
-                          >
-                            +
-                          </button>
+            {/* Inventory Items by Category */}
+            <div className="space-y-6">
+              {filteredItems.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                  <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    {items.length === 0 ? "No items yet" : "No items match your search"}
+                  </h3>
+                  <p className="text-gray-400">
+                    {items.length === 0 ? "Scan a receipt or add items manually to get started!" : "Try a different search term"}
+                  </p>
+                </div>
+              ) : (
+                Object.entries(itemsByCategory).map(([category, categoryItems]) => {
+                  const Icon = categoryIcons[category as Category]
+                  const colorClass = categoryColors[category as Category]
+
+                  return (
+                    <div key={category} className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                      {/* Category Header */}
+                      <div className={`px-6 py-3 border-l-4 ${colorClass}`}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-5 w-5" />
+                          <h3 className="text-lg font-bold capitalize">{category}</h3>
+                          <span className="text-sm">({categoryItems.length})</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900 min-w-[4rem] text-right">
-                          ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      </div>
+
+                      {/* Items */}
+                      <div className="divide-y divide-gray-100">
+                        {categoryItems.map((item) => {
+                          const daysOld = getDaysOld(item.created_at)
+                          const isNew = daysOld <= 2
+                          const isLowStock = item.quantity <= 2
+
+                          return (
+                            <div
+                              key={item.id}
+                              className="p-4 hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-semibold text-gray-900">{item.item}</h4>
+                                    {isNew && (
+                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                        NEW
+                                      </span>
+                                    )}
+                                    {isLowStock && (
+                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        Low
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                                    <span>${Number(item.price).toFixed(2)} each</span>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld} days ago`}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  {/* Quantity Controls */}
+                                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+                                    <button
+                                      onClick={async () => {
+                                        const newQty = Math.max(1, (item.quantity || 1) - 1)
+                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                        const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                                        setItems((data ?? []) as Item[])
+                                      }}
+                                      className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
+                                    >
+                                      −
+                                    </button>
+                                    <span className="font-bold text-gray-900 min-w-[2rem] text-center">
+                                      {item.quantity || 1}
+                                    </span>
+                                    <button
+                                      onClick={async () => {
+                                        const newQty = (item.quantity || 1) + 1
+                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                        const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                                        setItems((data ?? []) as Item[])
+                                      }}
+                                      className="text-gray-600 hover:text-gray-900 font-bold text-lg w-6 h-6 flex items-center justify-center"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+
+                                  {/* Total Price */}
+                                  <div className="text-right min-w-[4rem]">
+                                    <div className="text-lg font-bold text-gray-900">
+                                      ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
+                                    </div>
+                                  </div>
+
+                                  {/* Delete Button */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(item.id)}
+                                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  )
+                })
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      <ToastContainer />
     </div>
   )
 }
