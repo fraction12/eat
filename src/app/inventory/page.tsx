@@ -780,8 +780,6 @@ export default function InventoryPage() {
                                       <span className="font-medium text-gray-900">
                                         {currentQty} {item.unit || 'count'}
                                       </span>
-                                      <span className="text-gray-400">×</span>
-                                      <span>${Number(item.price).toFixed(2)}</span>
                                     </div>
                                     <div className="text-gray-400">•</div>
                                     <div className="relative inline-flex items-center">
