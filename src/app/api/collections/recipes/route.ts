@@ -1,39 +1,27 @@
+import { createServerSupabase } from "@/utils/supabase-server"
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-async function getUser() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("sb-auth-token")
-
-  if (!authCookie) {
-    return null
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
-  const { data: { user } } = await supabase.auth.getUser(authCookie.value)
-  return user
-}
+export const runtime = "nodejs"
 
 // GET - Fetch recipes in a collection
 export async function GET(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const { searchParams } = new URL(request.url)
     const collectionId = searchParams.get("collection_id")
 
     if (!collectionId) {
       return NextResponse.json({ error: "Collection ID required" }, { status: 400 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // Verify user owns this collection
     const { data: collection } = await supabase
@@ -68,12 +56,17 @@ export async function GET(request: Request) {
 
 // POST - Add recipe to collection
 export async function POST(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const body = await request.json()
     const { collection_id, recipe_url, recipe_title, recipe_image, recipe_source } = body
 
@@ -83,8 +76,6 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // Verify user owns this collection
     const { data: collection } = await supabase
@@ -140,12 +131,17 @@ export async function POST(request: Request) {
 
 // DELETE - Remove recipe from collection
 export async function DELETE(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const { searchParams } = new URL(request.url)
     const recipeId = searchParams.get("id")
     const collectionId = searchParams.get("collection_id")
@@ -156,8 +152,6 @@ export async function DELETE(request: Request) {
         { status: 400 }
       )
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // Verify user owns this collection
     const { data: collection } = await supabase

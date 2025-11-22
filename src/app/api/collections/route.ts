@@ -1,33 +1,21 @@
+import { createServerSupabase } from "@/utils/supabase-server"
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-async function getUser() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("sb-auth-token")
-
-  if (!authCookie) {
-    return null
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
-  const { data: { user } } = await supabase.auth.getUser(authCookie.value)
-  return user
-}
+export const runtime = "nodejs"
 
 // GET - Fetch user's collections
 export async function GET(request: Request) {
+  const supabase = await createServerSupabase()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
     // Fetch collections with recipe count
     const { data: collections, error } = await supabase
       .from("recipe_collections")
@@ -59,20 +47,23 @@ export async function GET(request: Request) {
 
 // POST - Create new collection
 export async function POST(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const body = await request.json()
     const { name, description, icon, color } = body
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     const { data: collection, error } = await supabase
       .from("recipe_collections")
@@ -100,20 +91,23 @@ export async function POST(request: Request) {
 
 // DELETE - Delete a collection
 export async function DELETE(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const { searchParams } = new URL(request.url)
     const collectionId = searchParams.get("id")
 
     if (!collectionId) {
       return NextResponse.json({ error: "Collection ID required" }, { status: 400 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     const { error } = await supabase
       .from("recipe_collections")
@@ -135,20 +129,23 @@ export async function DELETE(request: Request) {
 
 // PATCH - Update a collection
 export async function PATCH(request: Request) {
-  try {
-    const user = await getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const supabase = await createServerSupabase()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
     const body = await request.json()
     const { id, name, description, icon, color } = body
 
     if (!id) {
       return NextResponse.json({ error: "Collection ID required" }, { status: 400 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     const updates: any = {}
     if (name !== undefined) updates.name = name
