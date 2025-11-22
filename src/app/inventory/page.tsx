@@ -27,14 +27,14 @@ const categoryIcons: Record<Category, any> = {
   condiments: Droplet,
 }
 
-const categoryColors: Record<Category, { gradient: string, border: string }> = {
-  produce: { gradient: 'bg-gradient-to-r from-green-50 to-emerald-50', border: 'border-green-200' },
-  dairy: { gradient: 'bg-gradient-to-r from-blue-50 to-cyan-50', border: 'border-blue-200' },
-  meat: { gradient: 'bg-gradient-to-r from-red-50 to-pink-50', border: 'border-red-200' },
-  bakery: { gradient: 'bg-gradient-to-r from-amber-50 to-yellow-50', border: 'border-amber-200' },
-  pantry: { gradient: 'bg-gradient-to-r from-purple-50 to-fuchsia-50', border: 'border-purple-200' },
-  frozen: { gradient: 'bg-gradient-to-r from-cyan-50 to-blue-50', border: 'border-cyan-200' },
-  condiments: { gradient: 'bg-gradient-to-r from-orange-50 to-red-50', border: 'border-orange-200' },
+const categoryColors: Record<Category, { ring: string, borderLeft: string, iconColor: string }> = {
+  produce: { ring: 'ring-2 ring-green-400', borderLeft: 'border-l-4 border-l-green-500', iconColor: 'text-green-600' },
+  dairy: { ring: 'ring-2 ring-blue-400', borderLeft: 'border-l-4 border-l-blue-500', iconColor: 'text-blue-600' },
+  meat: { ring: 'ring-2 ring-red-400', borderLeft: 'border-l-4 border-l-red-500', iconColor: 'text-red-600' },
+  bakery: { ring: 'ring-2 ring-amber-400', borderLeft: 'border-l-4 border-l-amber-500', iconColor: 'text-amber-600' },
+  pantry: { ring: 'ring-2 ring-purple-400', borderLeft: 'border-l-4 border-l-purple-500', iconColor: 'text-purple-600' },
+  frozen: { ring: 'ring-2 ring-cyan-400', borderLeft: 'border-l-4 border-l-cyan-500', iconColor: 'text-cyan-600' },
+  condiments: { ring: 'ring-2 ring-orange-400', borderLeft: 'border-l-4 border-l-orange-500', iconColor: 'text-orange-600' },
 }
 
 // Categorize items based on name
@@ -564,24 +564,24 @@ export default function InventoryPage() {
                   const isCollapsed = collapsedCategories.has(category as Category)
 
                   return (
-                    <div key={category} className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div key={category} className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${colors.ring}`}>
                       {/* Category Header - Clickable */}
                       <button
                         onClick={() => toggleCategory(category as Category)}
-                        className={`w-full px-6 py-4 ${colors.gradient} border-b-2 ${colors.border} hover:opacity-90 transition-opacity`}
+                        className={`w-full px-6 py-4 bg-white ${colors.borderLeft} hover:bg-gray-50 transition-colors`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <Icon className="h-6 w-6 text-gray-700" />
+                            <Icon className={`h-6 w-6 ${colors.iconColor}`} />
                             <h3 className="text-lg font-bold text-gray-800 capitalize">{category}</h3>
-                            <span className="text-sm font-semibold text-gray-600 bg-white/60 px-2.5 py-0.5 rounded-full">
+                            <span className={`text-xs font-bold ${colors.iconColor} bg-gray-50 px-2.5 py-1 rounded-full`}>
                               {categoryItems.length}
                             </span>
                           </div>
                           {isCollapsed ? (
-                            <ChevronDown className="h-5 w-5 text-gray-600" />
+                            <ChevronDown className="h-5 w-5 text-gray-500" />
                           ) : (
-                            <ChevronUp className="h-5 w-5 text-gray-600" />
+                            <ChevronUp className="h-5 w-5 text-gray-500" />
                           )}
                         </div>
                       </button>
@@ -597,7 +597,7 @@ export default function InventoryPage() {
                           return (
                             <div
                               key={item.id}
-                              className="p-4 hover:bg-gray-50 transition-colors"
+                              className="p-4 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
                             >
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex-1 min-w-0">
