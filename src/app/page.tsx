@@ -14,7 +14,7 @@ export default async function Home() {
     redirect('/auth/signin')
   }
 
-  // Otherwise send them to the scan page
-  redirect('/scan')
+  // Otherwise send them to the inventory page
+  redirect('/inventory')
   return null
 }
