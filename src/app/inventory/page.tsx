@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import {
   Loader2, Trash2, Plus, Camera, Upload, Scan, Search, ChefHat,
   Apple, Milk, Beef, Croissant, Package, Snowflake, Droplet,
-  AlertCircle, Clock, ArrowRight, Filter, X
+  AlertCircle, Clock, ArrowRight, Filter, X, ChevronDown, ChevronUp
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import ReactWebcam from "react-webcam"
@@ -27,14 +27,14 @@ const categoryIcons: Record<Category, any> = {
   condiments: Droplet,
 }
 
-const categoryColors: Record<Category, string> = {
-  produce: 'bg-green-100 text-green-700 border-green-200',
-  dairy: 'bg-blue-100 text-blue-700 border-blue-200',
-  meat: 'bg-red-100 text-red-700 border-red-200',
-  bakery: 'bg-amber-100 text-amber-700 border-amber-200',
-  pantry: 'bg-purple-100 text-purple-700 border-purple-200',
-  frozen: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  condiments: 'bg-orange-100 text-orange-700 border-orange-200',
+const categoryColors: Record<Category, { gradient: string, border: string }> = {
+  produce: { gradient: 'bg-gradient-to-r from-green-50 to-emerald-50', border: 'border-green-200' },
+  dairy: { gradient: 'bg-gradient-to-r from-blue-50 to-cyan-50', border: 'border-blue-200' },
+  meat: { gradient: 'bg-gradient-to-r from-red-50 to-pink-50', border: 'border-red-200' },
+  bakery: { gradient: 'bg-gradient-to-r from-amber-50 to-yellow-50', border: 'border-amber-200' },
+  pantry: { gradient: 'bg-gradient-to-r from-purple-50 to-fuchsia-50', border: 'border-purple-200' },
+  frozen: { gradient: 'bg-gradient-to-r from-cyan-50 to-blue-50', border: 'border-cyan-200' },
+  condiments: { gradient: 'bg-gradient-to-r from-orange-50 to-red-50', border: 'border-orange-200' },
 }
 
 // Categorize items based on name
@@ -98,7 +98,22 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterCategory, setFilterCategory] = useState<Category | 'all'>('all')
 
+  // Collapsed categories state
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set())
+
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
+
+  const toggleCategory = (category: Category) => {
+    setCollapsedCategories(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(category)) {
+        newSet.delete(category)
+      } else {
+        newSet.add(category)
+      }
+      return newSet
+    })
+  }
 
   // Fetch current inventory
   useEffect(() => {
@@ -545,21 +560,35 @@ export default function InventoryPage() {
               ) : (
                 Object.entries(itemsByCategory).map(([category, categoryItems]) => {
                   const Icon = categoryIcons[category as Category]
-                  const colorClass = categoryColors[category as Category]
+                  const colors = categoryColors[category as Category]
+                  const isCollapsed = collapsedCategories.has(category as Category)
 
                   return (
                     <div key={category} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                      {/* Category Header */}
-                      <div className={`px-6 py-3 border-l-4 ${colorClass}`}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-5 w-5" />
-                          <h3 className="text-lg font-bold capitalize">{category}</h3>
-                          <span className="text-sm">({categoryItems.length})</span>
+                      {/* Category Header - Clickable */}
+                      <button
+                        onClick={() => toggleCategory(category as Category)}
+                        className={`w-full px-6 py-4 ${colors.gradient} border-b-2 ${colors.border} hover:opacity-90 transition-opacity`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Icon className="h-6 w-6 text-gray-700" />
+                            <h3 className="text-lg font-bold text-gray-800 capitalize">{category}</h3>
+                            <span className="text-sm font-semibold text-gray-600 bg-white/60 px-2.5 py-0.5 rounded-full">
+                              {categoryItems.length}
+                            </span>
+                          </div>
+                          {isCollapsed ? (
+                            <ChevronDown className="h-5 w-5 text-gray-600" />
+                          ) : (
+                            <ChevronUp className="h-5 w-5 text-gray-600" />
+                          )}
                         </div>
-                      </div>
+                      </button>
 
-                      {/* Items */}
-                      <div className="divide-y divide-gray-100">
+                      {/* Items - Collapsible */}
+                      {!isCollapsed && (
+                        <div className="divide-y divide-gray-100">
                         {categoryItems.map((item) => {
                           const daysOld = getDaysOld(item.created_at)
                           const isNew = daysOld <= 2
@@ -648,6 +677,7 @@ export default function InventoryPage() {
                           )
                         })}
                       </div>
+                      )}
                     </div>
                   )
                 })
