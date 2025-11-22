@@ -136,6 +136,7 @@ export default function InventoryPage() {
 
   // Local quantity state for responsive UI
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
+  const [updatingQuantities, setUpdatingQuantities] = useState<Set<string>>(new Set())
 
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
@@ -168,19 +169,58 @@ export default function InventoryPage() {
   }, [user])
 
   const handleDelete = async (id: string) => {
-    await supabase.from("inventory").delete().eq("id", id)
+    if (!user) return
+
+    const { error } = await supabase
+      .from("inventory")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error deleting item:", error)
+      showToast("error", "Failed to delete item")
+      return
+    }
+
     setItems((prev) => prev.filter((i) => i.id !== id))
     showToast("success", "Item removed from inventory")
   }
 
   const handleCategoryChange = async (id: string, newCategory: Category) => {
-    await supabase.from("inventory").update({ category: newCategory }).eq("id", id)
+    if (!user) return
+
+    const { error } = await supabase
+      .from("inventory")
+      .update({ category: newCategory })
+      .eq("id", id)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error updating category:", error)
+      showToast("error", "Failed to update category")
+      return
+    }
+
     await refetchItems()
     showToast("success", "Category updated")
   }
 
   const handleUnitChange = async (id: string, newUnit: string) => {
-    await supabase.from("inventory").update({ unit: newUnit }).eq("id", id)
+    if (!user) return
+
+    const { error } = await supabase
+      .from("inventory")
+      .update({ unit: newUnit })
+      .eq("id", id)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error updating unit:", error)
+      showToast("error", "Failed to update unit")
+      return
+    }
+
     await refetchItems()
     showToast("success", "Unit updated")
   }
@@ -764,22 +804,47 @@ export default function InventoryPage() {
                                 <Input
                                   type="number"
                                   min="0.01"
-                                  step="1"
+                                  step="0.01"
                                   value={localQuantities[item.id] ?? item.quantity ?? 1}
                                   onChange={(e) => {
                                     const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
                                     setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
                                   }}
                                   onBlur={async (e) => {
+                                    if (!user) return
+
                                     const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                    const originalQty = item.quantity ?? 1
+
+                                    // Skip update if value hasn't changed
+                                    if (newQty === originalQty) {
+                                      setLocalQuantities(prev => {
+                                        const updated = { ...prev }
+                                        delete updated[item.id]
+                                        return updated
+                                      })
+                                      return
+                                    }
+
+                                    // Set updating state
+                                    setUpdatingQuantities(prev => new Set(prev).add(item.id))
+
                                     const { error } = await supabase
                                       .from("inventory")
                                       .update({ quantity: newQty })
                                       .eq("id", item.id)
+                                      .eq("user_id", user.id)
+
+                                    // Clear updating state
+                                    setUpdatingQuantities(prev => {
+                                      const updated = new Set(prev)
+                                      updated.delete(item.id)
+                                      return updated
+                                    })
 
                                     if (error) {
                                       console.error("Error updating quantity:", error)
-                                      showToast("error", "Failed to update quantity")
+                                      showToast("error", `Failed to update quantity: ${error.message}`)
                                       // Revert to original value
                                       setLocalQuantities(prev => {
                                         const updated = { ...prev }
@@ -797,7 +862,10 @@ export default function InventoryPage() {
                                       showToast("success", "Quantity updated")
                                     }
                                   }}
-                                  className="w-20 h-8 text-sm text-center"
+                                  disabled={updatingQuantities.has(item.id)}
+                                  className={`w-20 h-8 text-sm text-center ${
+                                    updatingQuantities.has(item.id) ? 'opacity-50 cursor-not-allowed' : ''
+                                  }`}
                                 />
 
                                 {/* Total Price */}
