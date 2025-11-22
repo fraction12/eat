@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle } from "lucide-react"
+import {
+  Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle,
+  Heart, Filter, ArrowUpDown, Sparkles, ChefHat, Clock, Users
+} from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
 import { supabase } from "@/lib/supabase"
@@ -35,6 +38,16 @@ type InventoryItem = {
   created_at: string
 }
 
+type Favorite = {
+  id: string
+  recipe_title: string
+  recipe_link: string
+  recipe_image: string
+  recipe_source: string
+  recipe_description: string
+  created_at: string
+}
+
 export default function RecipesPage() {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
@@ -43,9 +56,16 @@ export default function RecipesPage() {
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
   const [isLoadingMealDB, setIsLoadingMealDB] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const recipesPerPage = 50
+
+  // Sorting and filtering
+  const [sortBy, setSortBy] = useState<"match" | "name" | "source" | "date">("match")
+  const [filterSource, setFilterSource] = useState<string>("all")
+  const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
   const [showManageFeedsModal, setShowManageFeedsModal] = useState(false)
@@ -55,6 +75,7 @@ export default function RecipesPage() {
     fetchFeeds()
     fetchInventory()
     fetchMealDBRecipes()
+    fetchFavorites()
   }, [])
 
   const fetchInventory = async () => {
@@ -80,6 +101,67 @@ export default function RecipesPage() {
       console.error("Failed to fetch TheMealDB recipes:", error)
     } finally {
       setIsLoadingMealDB(false)
+    }
+  }
+
+  const fetchFavorites = async () => {
+    try {
+      const response = await fetch("/api/favorites")
+      if (response.ok) {
+        const data = await response.json()
+        setFavorites(data.favorites || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch favorites:", error)
+    }
+  }
+
+  const isFavorite = (recipeLink: string): boolean => {
+    return favorites.some((fav) => fav.recipe_link === recipeLink)
+  }
+
+  const toggleFavorite = async (recipe: RSSRecipe) => {
+    const favorited = isFavorite(recipe.link)
+
+    if (favorited) {
+      // Remove from favorites
+      try {
+        const response = await fetch(`/api/favorites?recipe_link=${encodeURIComponent(recipe.link)}`, {
+          method: "DELETE",
+        })
+
+        if (response.ok) {
+          setFavorites(favorites.filter((fav) => fav.recipe_link !== recipe.link))
+        }
+      } catch (error) {
+        console.error("Failed to remove favorite:", error)
+        alert("Failed to remove from favorites")
+      }
+    } else {
+      // Add to favorites
+      try {
+        const response = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipe_title: recipe.title,
+            recipe_link: recipe.link,
+            recipe_image: recipe.image,
+            recipe_source: recipe.source || "Unknown",
+            recipe_description: recipe.description,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.favorite) {
+            setFavorites([...favorites, data.favorite])
+          }
+        }
+      } catch (error) {
+        console.error("Failed to add favorite:", error)
+        alert("Failed to add to favorites")
+      }
     }
   }
 
@@ -316,12 +398,41 @@ export default function RecipesPage() {
 
   // Get paginated recipes
   const getPaginatedRecipes = () => {
-    const allRecipes = getAllRecipes()
-    const filtered = filterRecipes(allRecipes)
+    let allRecipes = getAllRecipes()
 
-    // Sort by inventory matches (highest first)
-    const sorted = [...filtered].sort((a, b) => {
-      return canMakeRecipe(b) - canMakeRecipe(a)
+    // Filter by search query
+    allRecipes = filterRecipes(allRecipes)
+
+    // Filter by favorites
+    if (showFavoritesOnly) {
+      const favoriteLinks = new Set(favorites.map((f) => f.recipe_link))
+      allRecipes = allRecipes.filter((recipe) => favoriteLinks.has(recipe.link))
+    }
+
+    // Filter by source
+    if (filterSource !== "all") {
+      allRecipes = allRecipes.filter((recipe) => recipe.source === filterSource)
+    }
+
+    // Filter by category
+    if (filterCategory !== "all") {
+      allRecipes = allRecipes.filter((recipe) => recipe.category === filterCategory)
+    }
+
+    // Sort recipes
+    const sorted = [...allRecipes].sort((a, b) => {
+      switch (sortBy) {
+        case "match":
+          return canMakeRecipe(b) - canMakeRecipe(a)
+        case "name":
+          return a.title.localeCompare(b.title)
+        case "source":
+          return (a.source || "").localeCompare(b.source || "")
+        case "date":
+          return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+        default:
+          return 0
+      }
     })
 
     const startIndex = (currentPage - 1) * recipesPerPage
@@ -332,7 +443,34 @@ export default function RecipesPage() {
       recipes: paginated,
       total: sorted.length,
       totalPages: Math.ceil(sorted.length / recipesPerPage),
+      allRecipes: sorted,
     }
+  }
+
+  // Get unique sources and categories for filters
+  const getFilterOptions = () => {
+    const allRecipes = getAllRecipes()
+    const sources = new Set<string>()
+    const categories = new Set<string>()
+
+    allRecipes.forEach((recipe) => {
+      if (recipe.source) sources.add(recipe.source)
+      if (recipe.category) categories.add(recipe.category)
+    })
+
+    return {
+      sources: Array.from(sources).sort(),
+      categories: Array.from(categories).sort(),
+    }
+  }
+
+  const { sources: availableSources, categories: availableCategories } = getFilterOptions()
+  const getRandomRecipe = () => {
+    const { allRecipes } = getPaginatedRecipes()
+    if (allRecipes.length === 0) return
+
+    const random = allRecipes[Math.floor(Math.random() * allRecipes.length)]
+    window.open(random.link, "_blank")
   }
 
   const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
@@ -385,6 +523,92 @@ export default function RecipesPage() {
                 <Check className="h-4 w-4 text-green-600" />
                 <span className="text-sm font-medium text-green-700">{inventory.length} items in inventory</span>
               </div>
+            )}
+          </div>
+
+          {/* Filters and Actions */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={getRandomRecipe}
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 hover:from-orange-600 hover:to-pink-600"
+              >
+                <Sparkles className="h-4 w-4" />
+                Surprise Me!
+              </Button>
+
+              <Button
+                onClick={() => {
+                  setShowFavoritesOnly(!showFavoritesOnly)
+                  setCurrentPage(1)
+                }}
+                variant={showFavoritesOnly ? "default" : "outline"}
+                size="sm"
+                className="gap-2"
+              >
+                <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                Favorites ({favorites.length})
+              </Button>
+            </div>
+
+            {/* Sort By */}
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 text-gray-500" />
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value as any)
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="match">Best Match</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="source">Source</option>
+                <option value="date">Newest First</option>
+              </select>
+            </div>
+
+            {/* Filter by Source */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <select
+                value={filterSource}
+                onChange={(e) => {
+                  setFilterSource(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="all">All Sources ({total})</option>
+                {availableSources.map((source) => (
+                  <option key={source} value={source}>
+                    {source}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter by Category */}
+            {availableCategories.length > 0 && (
+              <select
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="all">All Categories</option>
+                {availableCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
         </div>
@@ -502,15 +726,33 @@ export default function RecipesPage() {
 
                         {/* Action */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <a
-                            href={recipe.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-800 font-medium text-sm"
-                          >
-                            View Recipe
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                toggleFavorite(recipe)
+                              }}
+                              className={`p-2 rounded-full transition-all ${
+                                isFavorite(recipe.link)
+                                  ? "text-red-500 hover:bg-red-50"
+                                  : "text-gray-400 hover:text-red-500 hover:bg-gray-50"
+                              }`}
+                              title={isFavorite(recipe.link) ? "Remove from favorites" : "Add to favorites"}
+                            >
+                              <Heart
+                                className={`h-5 w-5 ${isFavorite(recipe.link) ? "fill-current" : ""}`}
+                              />
+                            </button>
+                            <a
+                              href={recipe.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                            >
+                              <ChefHat className="h-4 w-4" />
+                              Cook This
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     )
