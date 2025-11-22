@@ -224,23 +224,24 @@ export default function InventoryPage() {
                       </>
                     ) : (
                       <>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          disabled={isScanning}
+                          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors cursor-pointer"
+                        >
                           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            disabled={isScanning}
-                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                            className="hidden"
-                            id="file-upload"
-                          />
-                          <label htmlFor="file-upload" className="cursor-pointer">
-                            <span className="text-sm text-gray-600">
-                              {file ? file.name : "Click to upload or drag and drop"}
-                            </span>
-                          </label>
-                        </div>
+                          <span className="text-sm text-gray-600">
+                            {file ? file.name : "Click to upload or drag and drop"}
+                          </span>
+                        </label>
                         <div className="grid grid-cols-2 gap-3">
                           <Button onClick={handleScan} disabled={isScanning || !file} className="w-full">
                             {isScanning ? (
