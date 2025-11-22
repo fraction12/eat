@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle,
-  Heart, Filter, ArrowUpDown, Sparkles, ChefHat, Clock, Users
+  Heart, Filter, ArrowUpDown, Sparkles, ChefHat, Clock, Users, Bookmark, FolderPlus
 } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
+import { CollectionsModal } from "@/components/CollectionsModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/AuthProvider"
@@ -76,6 +77,8 @@ export default function RecipesPage() {
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
   const [showManageFeedsModal, setShowManageFeedsModal] = useState(false)
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false)
+  const [selectedRecipe, setSelectedRecipe] = useState<RSSRecipe | null>(null)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -131,6 +134,41 @@ export default function RecipesPage() {
 
   const isFavorite = (recipeLink: string): boolean => {
     return favorites.some((fav) => fav.recipe_link === recipeLink)
+  }
+
+  const saveToCollection = (recipe: RSSRecipe) => {
+    setSelectedRecipe(recipe)
+    setShowCollectionsModal(true)
+  }
+
+  const handleCollectionSelect = async (collection: any) => {
+    if (!selectedRecipe) return
+
+    try {
+      const response = await fetch("/api/collections/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          collection_id: collection.id,
+          recipe_url: selectedRecipe.link,
+          recipe_title: selectedRecipe.title,
+          recipe_image: selectedRecipe.image,
+          recipe_source: selectedRecipe.source || "Unknown"
+        })
+      })
+
+      if (response.ok) {
+        showToast("success", `Saved to ${collection.name}`)
+      } else {
+        const data = await response.json()
+        showToast("error", data.error || "Failed to save recipe")
+      }
+    } catch (error) {
+      console.error("Failed to save recipe to collection:", error)
+      showToast("error", "Failed to save recipe")
+    } finally {
+      setSelectedRecipe(null)
+    }
   }
 
   const toggleFavorite = async (recipe: RSSRecipe) => {
@@ -561,18 +599,31 @@ export default function RecipesPage() {
                 </span>
               </p>
             </div>
-            <div className="flex gap-2 sm:gap-3 shrink-0">
+            <div className="flex gap-2 sm:gap-3 shrink-0 flex-wrap">
+              <Button
+                onClick={() => {
+                  setSelectedRecipe(null)
+                  setShowCollectionsModal(true)
+                }}
+                size="lg"
+                variant="outline"
+                className="gap-2"
+              >
+                <FolderPlus className="h-5 w-5" />
+                <span className="hidden sm:inline">My Collections</span>
+                <span className="sm:hidden">Collections</span>
+              </Button>
               <Button
                 onClick={() => setShowManageFeedsModal(true)}
                 size="lg"
                 variant="outline"
-                className="gap-2 flex-1 sm:flex-initial"
+                className="gap-2"
               >
                 <Rss className="h-5 w-5" />
-                <span className="hidden sm:inline">Manage Feeds ({feeds.length})</span>
-                <span className="sm:hidden">Manage</span>
+                <span className="hidden sm:inline">Feeds ({feeds.length})</span>
+                <span className="sm:hidden">Feeds</span>
               </Button>
-              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2 flex-1 sm:flex-initial">
+              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
                 <Plus className="h-5 w-5" />
                 <span className="hidden sm:inline">Add Feed</span>
                 <span className="sm:hidden">Add</span>
@@ -1058,6 +1109,16 @@ export default function RecipesPage() {
                                 className={`h-4 w-4 ${isFavorite(recipe.link) ? "fill-current" : ""}`}
                               />
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                saveToCollection(recipe)
+                              }}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
+                              title="Save to collection"
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </button>
                             <a
                               href={recipe.link}
                               target="_blank"
@@ -1153,6 +1214,16 @@ export default function RecipesPage() {
         feeds={feeds}
         onDeleteFeed={handleDeleteFeed}
         feedWarnings={feedWarnings}
+      />
+
+      <CollectionsModal
+        isOpen={showCollectionsModal}
+        onClose={() => {
+          setShowCollectionsModal(false)
+          setSelectedRecipe(null)
+        }}
+        onCollectionSelect={selectedRecipe ? handleCollectionSelect : undefined}
+        mode={selectedRecipe ? "select" : "manage"}
       />
 
       <ToastContainer />
