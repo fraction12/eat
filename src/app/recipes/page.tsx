@@ -488,6 +488,22 @@ export default function RecipesPage() {
                 <Plus className="h-5 w-5" />
                 Add Feed
               </Button>
+              {feeds.length < 15 && (
+                <Button
+                  onClick={async () => {
+                    if (confirm("Add all 15 default RSS feeds?")) {
+                      await addDefaultFeed()
+                      await fetchFeeds()
+                    }
+                  }}
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 bg-green-50 hover:bg-green-100"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  Add Default Feeds
+                </Button>
+              )}
             </div>
           </div>
         </div>
