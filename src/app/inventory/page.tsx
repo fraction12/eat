@@ -7,7 +7,7 @@ import { Loader2, Trash2, Plus, Camera, Upload, Scan } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import ReactWebcam from "react-webcam"
 
-type Item = { id: string; item: string; price: number; created_at: string }
+type Item = { id: string; item: string; price: number; quantity: number; created_at: string }
 
 export default function InventoryPage() {
   const [isScanning, setIsScanning] = useState(false)
@@ -23,9 +23,10 @@ export default function InventoryPage() {
   // Manual entry state
   const [manualItem, setManualItem] = useState("")
   const [manualPrice, setManualPrice] = useState("")
+  const [manualQuantity, setManualQuantity] = useState("1")
   const [isAdding, setIsAdding] = useState(false)
 
-  const total = items.reduce((sum, i) => sum + Number(i.price), 0)
+  const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
   // Fetch current inventory
   useEffect(() => {
@@ -121,12 +122,13 @@ export default function InventoryPage() {
     setIsAdding(true)
 
     const price = manualPrice ? parseFloat(manualPrice) : 0
+    const quantity = manualQuantity ? parseInt(manualQuantity) : 1
 
     // Save to Supabase using the same endpoint
     const saveRes = await fetch("/api/saveItems", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ item: manualItem.trim(), price }] }),
+      body: JSON.stringify({ items: [{ item: manualItem.trim(), price, quantity }] }),
     })
 
     if (!saveRes.ok) {
@@ -147,6 +149,7 @@ export default function InventoryPage() {
     // Clear form
     setManualItem("")
     setManualPrice("")
+    setManualQuantity("1")
     setIsAdding(false)
   }
 
@@ -277,22 +280,40 @@ export default function InventoryPage() {
                         className="text-lg"
                       />
                     </div>
-                    <div>
-                      <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
-                        Price (optional)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                          Price (optional)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                          <Input
+                            id="item-price"
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={manualPrice}
+                            onChange={(e) => setManualPrice(e.target.value)}
+                            disabled={isAdding}
+                            onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
+                            className="pl-8 text-lg"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="item-quantity" className="block text-sm font-medium text-gray-700 mb-2">
+                          Quantity
+                        </label>
                         <Input
-                          id="item-price"
+                          id="item-quantity"
                           type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={manualPrice}
-                          onChange={(e) => setManualPrice(e.target.value)}
+                          min="1"
+                          placeholder="1"
+                          value={manualQuantity}
+                          onChange={(e) => setManualQuantity(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="pl-8 text-lg"
+                          className="text-lg"
                         />
                       </div>
                     </div>
@@ -341,11 +362,40 @@ export default function InventoryPage() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{item.item}</h3>
                         <p className="text-sm text-gray-500">
-                          Added {new Date(item.created_at).toLocaleDateString()}
+                          ${Number(item.price).toFixed(2)} each • Added {new Date(item.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-lg font-bold text-gray-900">${Number(item.price).toFixed(2)}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-gray-300">
+                          <button
+                            onClick={async () => {
+                              const newQty = Math.max(1, (item.quantity || 1) - 1)
+                              await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                              const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                              setItems((data ?? []) as Item[])
+                            }}
+                            className="text-gray-600 hover:text-gray-900 font-bold text-lg"
+                          >
+                            −
+                          </button>
+                          <span className="font-semibold text-gray-900 min-w-[2rem] text-center">
+                            {item.quantity || 1}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              const newQty = (item.quantity || 1) + 1
+                              await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                              const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+                              setItems((data ?? []) as Item[])
+                            }}
+                            className="text-gray-600 hover:text-gray-900 font-bold text-lg"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <p className="text-lg font-bold text-gray-900 min-w-[4rem] text-right">
+                          ${(Number(item.price) * Number(item.quantity || 1)).toFixed(2)}
+                        </p>
                         <Button
                           variant="ghost"
                           size="sm"

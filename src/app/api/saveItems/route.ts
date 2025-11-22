@@ -23,13 +23,56 @@ export async function POST(req: Request) {
     }
   );
 
-  const { items } = await req.json();       // [{ item, price }]
-  const { error } = await supabase
-    .from("inventory")
-    .insert(items.map((i: any) => ({ item: i.item, price: i.price })));
+  try {
+    const { items } = await req.json(); // [{ item, price, quantity? }]
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    // Process each item
+    for (const newItem of items) {
+      const itemName = newItem.item.trim();
+      const price = newItem.price || 0;
+      const quantity = newItem.quantity || 1;
+
+      // Check if item already exists (case-insensitive)
+      const { data: existingItems, error: fetchError } = await supabase
+        .from("inventory")
+        .select("*")
+        .ilike("item", itemName);
+
+      if (fetchError) {
+        console.error("Error fetching existing item:", fetchError);
+        return NextResponse.json({ ok: false, error: fetchError.message }, { status: 500 });
+      }
+
+      if (existingItems && existingItems.length > 0) {
+        // Item exists - update quantity
+        const existingItem = existingItems[0];
+        const newQuantity = (existingItem.quantity || 1) + quantity;
+
+        const { error: updateError } = await supabase
+          .from("inventory")
+          .update({ quantity: newQuantity })
+          .eq("id", existingItem.id);
+
+        if (updateError) {
+          console.error("Error updating item quantity:", updateError);
+          return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+        }
+      } else {
+        // Item doesn't exist - insert new
+        const { error: insertError } = await supabase
+          .from("inventory")
+          .insert({ item: itemName, price, quantity });
+
+        if (insertError) {
+          console.error("Error inserting new item:", insertError);
+          return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 });
+        }
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error("Error in saveItems:", err);
+    return NextResponse.json({ ok: false, error: err.message || String(err) }, { status: 500 });
   }
-  return NextResponse.json({ ok: true });
 }
