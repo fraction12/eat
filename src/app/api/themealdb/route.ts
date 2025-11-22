@@ -22,7 +22,7 @@ export async function GET(request: Request) {
         if (data.meals) {
           // Get full details for each meal
           recipes = await Promise.all(
-            data.meals.slice(0, 20).map(async (meal: any) => {
+            data.meals.slice(0, 50).map(async (meal: any) => {
               const detailsRes = await fetch(
                 `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`
               )
@@ -47,9 +47,9 @@ export async function GET(request: Request) {
     }
     // Get random meals if no query
     else {
-      // Fetch 20 random meals
+      // Fetch 50 random meals
       const randomRecipes = await Promise.all(
-        Array.from({ length: 20 }).map(async () => {
+        Array.from({ length: 50 }).map(async () => {
           const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php")
           const data = await response.json()
           return data.meals ? data.meals[0] : null

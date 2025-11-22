@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
+import { ManageFeedsModal } from "@/components/ManageFeedsModal"
 import { supabase } from "@/lib/supabase"
 
 type RSSRecipe = {
@@ -44,9 +45,10 @@ export default function RecipesPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const recipesPerPage = 20
+  const recipesPerPage = 50
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
+  const [showManageFeedsModal, setShowManageFeedsModal] = useState(false)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -344,12 +346,25 @@ export default function RecipesPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
-              <p className="text-gray-600">Discover recipes from RSS feeds and TheMealDB</p>
+              <p className="text-gray-600">
+                Discover recipes from RSS feeds and TheMealDB • {feeds.length} feeds active
+              </p>
             </div>
-            <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
-              <Plus className="h-5 w-5" />
-              Add RSS Feed
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowManageFeedsModal(true)}
+                size="lg"
+                variant="outline"
+                className="gap-2"
+              >
+                <Rss className="h-5 w-5" />
+                Manage Feeds ({feeds.length})
+              </Button>
+              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Add Feed
+              </Button>
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -568,6 +583,14 @@ export default function RecipesPage() {
         isOpen={showAddFeedModal}
         onClose={() => setShowAddFeedModal(false)}
         onFeedAdded={fetchFeeds}
+      />
+
+      <ManageFeedsModal
+        isOpen={showManageFeedsModal}
+        onClose={() => setShowManageFeedsModal(false)}
+        feeds={feeds}
+        onDeleteFeed={handleDeleteFeed}
+        feedWarnings={feedWarnings}
       />
     </div>
   )

@@ -122,7 +122,7 @@ function parseRSSFeed(xmlText: string): any[] {
     }
   })
 
-  return recipes.slice(0, 20) // Limit to 20 recipes
+  return recipes.slice(0, 100) // Limit to 100 recipes per feed
 }
 
 function extractTag(xml: string, tagName: string, attribute?: string): string {
