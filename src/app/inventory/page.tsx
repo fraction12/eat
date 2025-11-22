@@ -702,118 +702,101 @@ export default function InventoryPage() {
                           return (
                             <div
                               key={item.id}
-                              className="p-4 sm:p-5 hover:bg-orange-50/30 hover:shadow-sm transition-all duration-150"
+                              className="p-4 hover:bg-orange-50/30 transition-all duration-150"
                             >
-                              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                                {/* Left: Item Info */}
-                                <div className="flex-1 min-w-0">
-                                  {/* Item Name & Badges */}
-                                  <div className="flex items-center gap-2 mb-2 sm:mb-3 flex-wrap">
-                                    <h4 className="font-semibold text-gray-900 text-base">{item.item}</h4>
-                                    {isNew && (
-                                      <span className="inline-flex items-center h-6 px-2.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                                        NEW
-                                      </span>
-                                    )}
-                                    {isLowStock && (
-                                      <span className="inline-flex items-center h-6 px-2.5 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
-                                        <AlertCircle className="h-3 w-3" />
-                                        Low
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Metadata Row - Improved Layout */}
-                                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                    {/* Price */}
-                                    <div className="inline-flex items-center h-8 px-2.5 sm:px-3 bg-gray-50 rounded-md text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">
-                                      ${Number(item.price).toFixed(2)}
-                                      <span className="hidden sm:inline ml-1">each</span>
-                                    </div>
-
-                                    {/* Date */}
-                                    <div className="inline-flex items-center h-8 px-2.5 sm:px-3 bg-gray-50 rounded-md text-xs sm:text-sm text-gray-600 gap-1.5 whitespace-nowrap">
-                                      <Clock className="h-3.5 w-3.5 shrink-0" />
-                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
-                                    </div>
-
-                                    {/* Category Dropdown */}
-                                    <select
-                                      value={categorizeItem(item)}
-                                      onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                      className="h-8 px-2 sm:px-3 py-0 text-xs sm:text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                                    >
-                                      <option value="produce">🥬 Produce</option>
-                                      <option value="dairy">🥛 Dairy</option>
-                                      <option value="meat">🥩 Meat</option>
-                                      <option value="bakery">🍞 Bakery</option>
-                                      <option value="pantry">🥫 Pantry</option>
-                                      <option value="frozen">🧊 Frozen</option>
-                                      <option value="condiments">🧂 Condiments</option>
-                                    </select>
-
-                                    {/* Unit Dropdown */}
-                                    <select
-                                      value={item.unit || 'count'}
-                                      onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                      className="h-8 px-2 sm:px-3 py-0 text-xs sm:text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors max-w-[120px]"
-                                    >
-                                      {unitOptions.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                      ))}
-                                    </select>
-                                  </div>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                {/* Item Name */}
+                                <div className="font-semibold text-gray-900 text-base min-w-[120px]">
+                                  {item.item}
                                 </div>
 
-                                {/* Right: Quantity Input & Actions */}
-                                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                                  {/* Quantity Input */}
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      type="number"
-                                      min="0.01"
-                                      step="1"
-                                      value={localQuantities[item.id] ?? item.quantity ?? 1}
-                                      onChange={(e) => {
-                                        const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
-                                        // Update local state immediately for responsive UI
-                                        setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
-                                      }}
-                                      onBlur={async (e) => {
-                                        const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
-                                        // Save to database when user finishes editing
-                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                        // Clear local state and refresh from database
-                                        setLocalQuantities(prev => {
-                                          const updated = { ...prev }
-                                          delete updated[item.id]
-                                          return updated
-                                        })
-                                        await refetchItems()
-                                      }}
-                                      className="w-20 sm:w-24 h-9 text-sm text-center"
-                                    />
-                                  </div>
+                                {/* Badges */}
+                                {isNew && (
+                                  <span className="inline-flex items-center h-6 px-2.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                                    NEW
+                                  </span>
+                                )}
+                                {isLowStock && (
+                                  <span className="inline-flex items-center h-6 px-2.5 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Low
+                                  </span>
+                                )}
 
-                                  {/* Total Price & Delete */}
-                                  <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className="text-right">
-                                      <div className="text-base sm:text-lg font-bold text-gray-900 whitespace-nowrap">
-                                        ${(Number(item.price) * Number(localQuantities[item.id] ?? item.quantity ?? 1)).toFixed(2)}
-                                      </div>
-                                    </div>
-
-                                    {/* Delete Button */}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDelete(item.id)}
-                                      className="h-9 w-9 p-0 text-red-600 hover:text-red-800 hover:bg-red-50 shrink-0"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
+                                {/* Price */}
+                                <div className="text-sm text-gray-700 whitespace-nowrap">
+                                  ${Number(item.price).toFixed(2)} each
                                 </div>
+
+                                {/* Date */}
+                                <div className="inline-flex items-center text-sm text-gray-600 gap-1.5 whitespace-nowrap">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
+                                </div>
+
+                                {/* Category Dropdown */}
+                                <select
+                                  value={categorizeItem(item)}
+                                  onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
+                                  className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                >
+                                  <option value="produce">🥬 Produce</option>
+                                  <option value="dairy">🥛 Dairy</option>
+                                  <option value="meat">🥩 Meat</option>
+                                  <option value="bakery">🍞 Bakery</option>
+                                  <option value="pantry">🥫 Pantry</option>
+                                  <option value="frozen">🧊 Frozen</option>
+                                  <option value="condiments">🧂 Condiments</option>
+                                </select>
+
+                                {/* Unit Dropdown */}
+                                <select
+                                  value={item.unit || 'count'}
+                                  onChange={(e) => handleUnitChange(item.id, e.target.value)}
+                                  className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                >
+                                  {unitOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ))}
+                                </select>
+
+                                {/* Quantity Input */}
+                                <Input
+                                  type="number"
+                                  min="0.01"
+                                  step="1"
+                                  value={localQuantities[item.id] ?? item.quantity ?? 1}
+                                  onChange={(e) => {
+                                    const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                    setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
+                                  }}
+                                  onBlur={async (e) => {
+                                    const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
+                                    await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
+                                    setLocalQuantities(prev => {
+                                      const updated = { ...prev }
+                                      delete updated[item.id]
+                                      return updated
+                                    })
+                                    await refetchItems()
+                                  }}
+                                  className="w-20 h-8 text-sm text-center"
+                                />
+
+                                {/* Total Price */}
+                                <div className="text-base font-bold text-gray-900 whitespace-nowrap min-w-[70px] text-right">
+                                  ${(Number(item.price) * Number(localQuantities[item.id] ?? item.quantity ?? 1)).toFixed(2)}
+                                </div>
+
+                                {/* Delete Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(item.id)}
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                           )
