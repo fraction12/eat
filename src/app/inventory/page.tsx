@@ -470,9 +470,9 @@ export default function InventoryPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <div>
-                      <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="item-name" className="block text-sm font-semibold text-gray-700 mb-2">
                         Item Name *
                       </label>
                       <Input
@@ -483,11 +483,12 @@ export default function InventoryPage() {
                         onChange={(e) => setManualItem(e.target.value)}
                         disabled={isAdding}
                         onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                        className="text-lg"
+                        className="h-11 text-base"
                       />
                     </div>
+
                     <div>
-                      <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="item-category" className="block text-sm font-semibold text-gray-700 mb-2">
                         Category *
                       </label>
                       <select
@@ -495,7 +496,7 @@ export default function InventoryPage() {
                         value={manualCategory}
                         onChange={(e) => setManualCategory(e.target.value as Category)}
                         disabled={isAdding}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                        className="w-full h-11 px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                       >
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
@@ -506,9 +507,10 @@ export default function InventoryPage() {
                         <option value="condiments">🧂 Condiments</option>
                       </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="item-quantity" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="item-quantity" className="block text-sm font-semibold text-gray-700 mb-2">
                           Quantity *
                         </label>
                         <Input
@@ -521,11 +523,11 @@ export default function InventoryPage() {
                           onChange={(e) => setManualQuantity(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="text-lg"
+                          className="h-11 text-base"
                         />
                       </div>
                       <div>
-                        <label htmlFor="item-unit" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="item-unit" className="block text-sm font-semibold text-gray-700 mb-2">
                           Unit *
                         </label>
                         <select
@@ -533,7 +535,7 @@ export default function InventoryPage() {
                           value={manualUnit}
                           onChange={(e) => setManualUnit(e.target.value)}
                           disabled={isAdding}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-[42px]"
+                          className="w-full h-11 px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         >
                           {unitOptions.map(unit => (
                             <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -541,12 +543,13 @@ export default function InventoryPage() {
                         </select>
                       </div>
                     </div>
+
                     <div>
-                      <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="item-price" className="block text-sm font-semibold text-gray-700 mb-2">
                         Price (optional)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
                         <Input
                           id="item-price"
                           type="number"
@@ -556,11 +559,17 @@ export default function InventoryPage() {
                           onChange={(e) => setManualPrice(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="pl-8 text-lg"
+                          className="h-11 pl-8 text-base"
                         />
                       </div>
                     </div>
-                    <Button onClick={handleManualAdd} disabled={isAdding || !manualItem.trim()} className="w-full" size="lg">
+
+                    <Button
+                      onClick={handleManualAdd}
+                      disabled={isAdding || !manualItem.trim()}
+                      className="w-full h-12 text-base font-semibold"
+                      size="lg"
+                    >
                       {isAdding ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
