@@ -781,103 +781,105 @@ export default function InventoryPage() {
                                         {currentQty} {item.unit || 'count'}
                                       </span>
                                       <span className="text-gray-400">×</span>
-                                      <div className="relative inline-flex items-center">
-                                        <span className="text-gray-600 mr-0.5">$</span>
-                                        <Input
-                                          type="number"
-                                          min="0.01"
-                                          step="0.01"
-                                          placeholder="0.01"
-                                          value={localPrices[item.id] !== undefined ? localPrices[item.id] : Number(item.price).toFixed(2)}
-                                          onChange={(e) => {
-                                            const value = e.target.value
-                                            if (value === '') {
-                                              setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
-                                              return
-                                            }
-                                            const numValue = parseFloat(value)
-                                            if (!isNaN(numValue)) {
-                                              setLocalPrices(prev => ({ ...prev, [item.id]: numValue }))
-                                            }
-                                          }}
-                                          onFocus={(e) => e.target.select()}
-                                          onBlur={async (e) => {
-                                            if (!user) return
-
-                                            let newPrice = parseFloat(e.target.value)
-                                            if (isNaN(newPrice) || newPrice <= 0) {
-                                              newPrice = 0.01
-                                            }
-
-                                            newPrice = Math.round(newPrice * 100) / 100
-                                            const originalPrice = Number(item.price)
-
-                                            if (newPrice === originalPrice) {
-                                              setLocalPrices(prev => {
-                                                const updated = { ...prev }
-                                                delete updated[item.id]
-                                                return updated
-                                              })
-                                              return
-                                            }
-
-                                            setUpdatingPrices(prev => new Set(prev).add(item.id))
-
-                                            const { error } = await supabase
-                                              .from("inventory")
-                                              .update({ price: newPrice })
-                                              .eq("id", item.id)
-                                              .eq("user_id", user.id)
-
-                                            setUpdatingPrices(prev => {
-                                              const updated = new Set(prev)
-                                              updated.delete(item.id)
-                                              return updated
-                                            })
-
-                                            if (error) {
-                                              console.error("Error updating price:", error)
-                                              showToast("error", `Failed to update price: ${error.message}`)
-                                              setLocalPrices(prev => {
-                                                const updated = { ...prev }
-                                                delete updated[item.id]
-                                                return updated
-                                              })
-                                            } else {
-                                              setLocalPrices(prev => {
-                                                const updated = { ...prev }
-                                                delete updated[item.id]
-                                                return updated
-                                              })
-                                              await refetchItems()
-                                              showToast("success", "Price updated")
-                                            }
-                                          }}
-                                          onKeyDown={(e) => {
-                                            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                                              e.preventDefault()
-                                            }
-                                            if (e.key === 'Enter') {
-                                              e.currentTarget.blur()
-                                            }
-                                            if ((e.key === 'Delete' || e.key === 'Backspace') &&
-                                                e.currentTarget.selectionStart === 0 &&
-                                                e.currentTarget.selectionEnd === e.currentTarget.value.length) {
-                                              e.preventDefault()
-                                              setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
-                                            }
-                                          }}
-                                          disabled={updatingPrices.has(item.id)}
-                                          className={`w-16 h-6 px-1 text-sm text-center border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                            updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white hover:bg-gray-50'
-                                          }`}
-                                          title="Edit price"
-                                        />
-                                      </div>
+                                      <span>${Number(item.price).toFixed(2)}</span>
                                     </div>
                                     <div className="text-gray-400">•</div>
-                                    <div className="font-semibold text-gray-900">
-                                      ${totalPrice.toFixed(2)} total
+                                    <div className="relative inline-flex items-center">
+                                      <span className="text-gray-600 mr-0.5">$</span>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={localPrices[item.id] !== undefined ? localPrices[item.id] : totalPrice.toFixed(2)}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          if (value === '') {
+                                            setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
+                                            return
+                                          }
+                                          const numValue = parseFloat(value)
+                                          if (!isNaN(numValue) && numValue >= 0) {
+                                            setLocalPrices(prev => ({ ...prev, [item.id]: numValue }))
+                                          }
+                                        }}
+                                        onFocus={(e) => e.target.select()}
+                                        onBlur={async (e) => {
+                                          if (!user) return
+
+                                          let newTotal = parseFloat(e.target.value)
+                                          if (isNaN(newTotal) || newTotal < 0) {
+                                            newTotal = 0
+                                          }
+
+                                          newTotal = Math.round(newTotal * 100) / 100
+                                          const originalTotal = totalPrice
+
+                                          if (newTotal === originalTotal) {
+                                            setLocalPrices(prev => {
+                                              const updated = { ...prev }
+                                              delete updated[item.id]
+                                              return updated
+                                            })
+                                            return
+                                          }
+
+                                          setUpdatingPrices(prev => new Set(prev).add(item.id))
+
+                                          // Calculate new unit price from total
+                                          const newUnitPrice = currentQty > 0 ? newTotal / currentQty : 0
+
+                                          const { error } = await supabase
+                                            .from("inventory")
+                                            .update({ price: newUnitPrice })
+                                            .eq("id", item.id)
+                                            .eq("user_id", user.id)
+
+                                          setUpdatingPrices(prev => {
+                                            const updated = new Set(prev)
+                                            updated.delete(item.id)
+                                            return updated
+                                          })
+
+                                          if (error) {
+                                            console.error("Error updating price:", error)
+                                            showToast("error", `Failed to update price: ${error.message}`)
+                                            setLocalPrices(prev => {
+                                              const updated = { ...prev }
+                                              delete updated[item.id]
+                                              return updated
+                                            })
+                                          } else {
+                                            setLocalPrices(prev => {
+                                              const updated = { ...prev }
+                                              delete updated[item.id]
+                                              return updated
+                                            })
+                                            await refetchItems()
+                                            showToast("success", "Price updated")
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                            e.preventDefault()
+                                          }
+                                          if (e.key === 'Enter') {
+                                            e.currentTarget.blur()
+                                          }
+                                          if ((e.key === 'Delete' || e.key === 'Backspace') &&
+                                              e.currentTarget.selectionStart === 0 &&
+                                              e.currentTarget.selectionEnd === e.currentTarget.value.length) {
+                                            e.preventDefault()
+                                            setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
+                                          }
+                                        }}
+                                        disabled={updatingPrices.has(item.id)}
+                                        className={`w-20 h-6 px-1 text-sm font-semibold text-center border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                          updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white hover:bg-gray-50'
+                                        }`}
+                                        title="Edit total price"
+                                      />
+                                      <span className="ml-1 text-gray-600">total</span>
                                     </div>
                                     <div className="text-gray-400">•</div>
                                     <div className="inline-flex items-center gap-1.5">
