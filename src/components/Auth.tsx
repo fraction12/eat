@@ -41,7 +41,7 @@ export function Auth() {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            🍳 Eat AI
+            🍳 Eat
           </h1>
           <p className="text-gray-600">
             Sign in to track your ingredients and find recipes
@@ -125,17 +125,6 @@ export function Auth() {
             {message}
           </div>
         )}
-
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="flex-1 h-px bg-gray-200"></div>
-            <span>No password required</span>
-            <div className="flex-1 h-px bg-gray-200"></div>
-          </div>
-          <p className="text-xs text-gray-500 text-center mt-4">
-            We'll send you a secure login link. No passwords to remember! 🎉
-          </p>
-        </div>
       </div>
     </div>
   )
