@@ -805,23 +805,37 @@ export default function InventoryPage() {
                                   type="number"
                                   min="0.01"
                                   step="0.01"
-                                  value={localQuantities[item.id] ?? item.quantity ?? 1}
+                                  placeholder="0.01"
+                                  value={localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1}
                                   onChange={(e) => {
                                     const value = e.target.value
                                     // Allow empty string during typing
                                     if (value === '') {
-                                      setLocalQuantities(prev => ({ ...prev, [item.id]: 0.01 }))
+                                      setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
                                       return
                                     }
-                                    const newQty = Math.max(0.01, Number(value) || 0.01)
-                                    setLocalQuantities(prev => ({ ...prev, [item.id]: newQty }))
+                                    // Allow typing any number, no forced minimum during input
+                                    const numValue = parseFloat(value)
+                                    if (!isNaN(numValue)) {
+                                      setLocalQuantities(prev => ({ ...prev, [item.id]: numValue }))
+                                    }
+                                  }}
+                                  onFocus={(e) => {
+                                    // Select all text on focus for easy replacement
+                                    e.target.select()
                                   }}
                                   onBlur={async (e) => {
                                     if (!user) return
 
-                                    let newQty = Number(e.target.value) || 0.01
-                                    // Ensure minimum value and round to 2 decimals
-                                    newQty = Math.max(0.01, Math.round(newQty * 100) / 100)
+                                    let newQty = parseFloat(e.target.value)
+
+                                    // If empty or invalid, default to 0.01
+                                    if (isNaN(newQty) || newQty <= 0) {
+                                      newQty = 0.01
+                                    }
+
+                                    // Round to 2 decimals
+                                    newQty = Math.round(newQty * 100) / 100
                                     const originalQty = item.quantity ?? 1
 
                                     // Skip update if value hasn't changed
@@ -871,13 +885,20 @@ export default function InventoryPage() {
                                     }
                                   }}
                                   onKeyDown={(e) => {
-                                    // Prevent negative values
+                                    // Prevent negative values and scientific notation
                                     if (e.key === '-' || e.key === 'e' || e.key === 'E') {
                                       e.preventDefault()
                                     }
-                                    // Submit on Enter
+                                    // Save on Enter
                                     if (e.key === 'Enter') {
                                       e.currentTarget.blur()
+                                    }
+                                    // Clear field on Delete/Backspace when all selected
+                                    if ((e.key === 'Delete' || e.key === 'Backspace') &&
+                                        e.currentTarget.selectionStart === 0 &&
+                                        e.currentTarget.selectionEnd === e.currentTarget.value.length) {
+                                      e.preventDefault()
+                                      setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
                                     }
                                   }}
                                   disabled={updatingQuantities.has(item.id)}
