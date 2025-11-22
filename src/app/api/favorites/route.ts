@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabase } from "@/utils/supabase-server"
 import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
 // Get user's favorite recipes
 export async function GET() {
-  const supabase = await createClient()
+  const supabase = await createServerSupabase()
 
   const {
     data: { user },
@@ -31,7 +31,7 @@ export async function GET() {
 
 // Add a recipe to favorites
 export async function POST(request: Request) {
-  const supabase = await createClient()
+  const supabase = await createServerSupabase()
 
   const {
     data: { user },
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
 // Remove a recipe from favorites
 export async function DELETE(request: Request) {
-  const supabase = await createClient()
+  const supabase = await createServerSupabase()
 
   const {
     data: { user },
