@@ -11,6 +11,7 @@ import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/components/AuthProvider"
 
 type RSSRecipe = {
   title: string
@@ -50,6 +51,7 @@ type Favorite = {
 }
 
 export default function RecipesPage() {
+  const { user } = useAuth()
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [feedWarnings, setFeedWarnings] = useState<Record<string, string>>({})
@@ -71,15 +73,20 @@ export default function RecipesPage() {
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
-    fetchFeeds()
-    fetchInventory()
-    fetchFavorites()
-  }, [])
+    if (user) {
+      fetchFeeds()
+      fetchInventory()
+      fetchFavorites()
+    }
+  }, [user])
 
   const fetchInventory = async () => {
+    if (!user) return
+
     const { data, error } = await supabase
       .from("inventory")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     if (!error && data) {
