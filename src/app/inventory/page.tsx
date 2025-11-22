@@ -107,33 +107,6 @@ function getDaysOld(createdAt: string): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
-// Get appropriate step size based on unit
-function getStepForUnit(unit?: string): number {
-  if (!unit || unit === 'count') return 1
-
-  switch (unit) {
-    case 'oz':
-    case 'g':
-    case 'ml':
-      return 1  // Single ounce/gram/ml increments
-    case 'lb':
-    case 'kg':
-      return 0.1  // Decimal increments for weight
-    case 'l':
-      return 0.5  // Half liter increments
-    case 'gal':
-      return 0.25  // Quarter gallon increments
-    case 'cup':
-      return 0.25  // Quarter cup increments
-    case 'tbsp':
-      return 1  // Whole tablespoon increments
-    case 'tsp':
-      return 0.5  // Half teaspoon increments
-    default:
-      return 0.1
-  }
-}
-
 export default function InventoryPage() {
   const { user } = useAuth()
   const [isScanning, setIsScanning] = useState(false)
@@ -789,37 +762,22 @@ export default function InventoryPage() {
                                   </div>
                                 </div>
 
-                                {/* Right: Quantity Controls & Actions */}
+                                {/* Right: Quantity Input & Actions */}
                                 <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                                  {/* Quantity Controls */}
-                                  <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 rounded-lg px-2 sm:px-3 py-2 border border-gray-200">
-                                    <button
-                                      onClick={async () => {
-                                        const step = getStepForUnit(item.unit)
-                                        const currentQty = Number(item.quantity || 1)
-                                        const newQty = Math.max(step, Number((currentQty - step).toFixed(2)))
+                                  {/* Quantity Input */}
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0.01"
+                                      step="0.01"
+                                      value={item.quantity || 1}
+                                      onChange={async (e) => {
+                                        const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
                                         await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
                                         await refetchItems()
                                       }}
-                                      className="flex items-center justify-center w-7 h-7 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-colors font-bold text-lg"
-                                    >
-                                      −
-                                    </button>
-                                    <span className="font-semibold text-gray-900 min-w-[4rem] sm:min-w-[5rem] text-center text-xs sm:text-sm">
-                                      {(!item.unit || item.unit === 'count') ? item.quantity || 1 : Number(item.quantity || 1).toFixed(1)} {item.unit || 'count'}
-                                    </span>
-                                    <button
-                                      onClick={async () => {
-                                        const step = getStepForUnit(item.unit)
-                                        const currentQty = Number(item.quantity || 1)
-                                        const newQty = Number((currentQty + step).toFixed(2))
-                                        await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                        await refetchItems()
-                                      }}
-                                      className="flex items-center justify-center w-7 h-7 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-colors font-bold text-lg"
-                                    >
-                                      +
-                                    </button>
+                                      className="w-20 sm:w-24 h-9 text-sm text-center"
+                                    />
                                   </div>
 
                                   {/* Total Price & Delete */}
