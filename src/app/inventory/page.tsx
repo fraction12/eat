@@ -223,7 +223,7 @@ export default function InventoryPage() {
                       <>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors">
                           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <Input
+                          <input
                             type="file"
                             accept="image/*"
                             capture="environment"
