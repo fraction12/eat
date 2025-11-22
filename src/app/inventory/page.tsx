@@ -772,13 +772,30 @@ export default function InventoryPage() {
                                   }}
                                   onBlur={async (e) => {
                                     const newQty = Math.max(0.01, Number(e.target.value) || 0.01)
-                                    await supabase.from("inventory").update({ quantity: newQty }).eq("id", item.id)
-                                    setLocalQuantities(prev => {
-                                      const updated = { ...prev }
-                                      delete updated[item.id]
-                                      return updated
-                                    })
-                                    await refetchItems()
+                                    const { error } = await supabase
+                                      .from("inventory")
+                                      .update({ quantity: newQty })
+                                      .eq("id", item.id)
+
+                                    if (error) {
+                                      console.error("Error updating quantity:", error)
+                                      showToast("error", "Failed to update quantity")
+                                      // Revert to original value
+                                      setLocalQuantities(prev => {
+                                        const updated = { ...prev }
+                                        delete updated[item.id]
+                                        return updated
+                                      })
+                                    } else {
+                                      // Clear local state and refresh
+                                      setLocalQuantities(prev => {
+                                        const updated = { ...prev }
+                                        delete updated[item.id]
+                                        return updated
+                                      })
+                                      await refetchItems()
+                                      showToast("success", "Quantity updated")
+                                    }
                                   }}
                                   className="w-20 h-8 text-sm text-center"
                                 />
