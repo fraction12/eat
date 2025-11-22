@@ -738,189 +738,193 @@ export default function InventoryPage() {
                           const daysOld = getDaysOld(item.created_at)
                           const isNew = daysOld <= 2
                           const isLowStock = item.quantity <= 2
+                          const currentQty = localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1
+                          const totalPrice = Number(item.price) * Number(currentQty)
 
                           return (
                             <div
                               key={item.id}
-                              className="p-4 hover:bg-orange-50/30 transition-all duration-150"
+                              className="p-5 hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-transparent transition-all duration-200"
                             >
-                              <div className="flex items-center gap-3 flex-wrap">
-                                {/* Item Name */}
-                                <div className="font-semibold text-gray-900 text-base min-w-[120px]">
-                                  {item.item}
+                              {/* Grid Layout: Info Left | Controls Right */}
+                              <div className="grid grid-cols-[1fr,auto] gap-6 items-center">
+
+                                {/* LEFT: Item Information */}
+                                <div className="space-y-2">
+                                  {/* Item Name + Badges */}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold text-gray-900 text-base">
+                                      {item.item}
+                                    </h4>
+                                    {isNew && (
+                                      <span className="inline-flex items-center h-5 px-2 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                                        NEW
+                                      </span>
+                                    )}
+                                    {isLowStock && (
+                                      <span className="inline-flex items-center h-5 px-2 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        Low
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Metadata Row */}
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-medium text-gray-900">
+                                        {currentQty} {item.unit || 'count'}
+                                      </span>
+                                      <span className="text-gray-400">×</span>
+                                      <span>${Number(item.price).toFixed(2)}</span>
+                                    </div>
+                                    <div className="text-gray-400">•</div>
+                                    <div className="font-semibold text-gray-900">
+                                      ${totalPrice.toFixed(2)} total
+                                    </div>
+                                    <div className="text-gray-400">•</div>
+                                    <div className="inline-flex items-center gap-1.5">
+                                      <Clock className="h-3.5 w-3.5 text-gray-400" />
+                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
+                                    </div>
+                                  </div>
                                 </div>
 
-                                {/* Badges */}
-                                {isNew && (
-                                  <span className="inline-flex items-center h-6 px-2.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                                    NEW
-                                  </span>
-                                )}
-                                {isLowStock && (
-                                  <span className="inline-flex items-center h-6 px-2.5 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
-                                    <AlertCircle className="h-3 w-3" />
-                                    Low
-                                  </span>
-                                )}
+                                {/* RIGHT: Controls */}
+                                <div className="flex items-center gap-2">
+                                  {/* Category Dropdown */}
+                                  <select
+                                    value={categorizeItem(item)}
+                                    onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
+                                    className="h-9 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    title="Change category"
+                                  >
+                                    <option value="produce">🥬 Produce</option>
+                                    <option value="dairy">🥛 Dairy</option>
+                                    <option value="meat">🥩 Meat</option>
+                                    <option value="bakery">🍞 Bakery</option>
+                                    <option value="pantry">🥫 Pantry</option>
+                                    <option value="frozen">🧊 Frozen</option>
+                                    <option value="condiments">🧂 Condiments</option>
+                                  </select>
 
-                                {/* Price */}
-                                <div className="text-sm text-gray-700 whitespace-nowrap">
-                                  ${Number(item.price).toFixed(2)} each
+                                  {/* Unit Dropdown */}
+                                  <select
+                                    value={item.unit || 'count'}
+                                    onChange={(e) => handleUnitChange(item.id, e.target.value)}
+                                    className="h-9 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    title="Change unit"
+                                  >
+                                    {unitOptions.map(opt => (
+                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                  </select>
+
+                                  {/* Quantity Input */}
+                                  <div className="relative">
+                                    <Input
+                                      type="number"
+                                      min="0.01"
+                                      step="0.01"
+                                      placeholder="0.01"
+                                      value={localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1}
+                                      onChange={(e) => {
+                                        const value = e.target.value
+                                        if (value === '') {
+                                          setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
+                                          return
+                                        }
+                                        const numValue = parseFloat(value)
+                                        if (!isNaN(numValue)) {
+                                          setLocalQuantities(prev => ({ ...prev, [item.id]: numValue }))
+                                        }
+                                      }}
+                                      onFocus={(e) => e.target.select()}
+                                      onBlur={async (e) => {
+                                        if (!user) return
+
+                                        let newQty = parseFloat(e.target.value)
+                                        if (isNaN(newQty) || newQty <= 0) {
+                                          newQty = 0.01
+                                        }
+
+                                        newQty = Math.round(newQty * 100) / 100
+                                        const originalQty = item.quantity ?? 1
+
+                                        if (newQty === originalQty) {
+                                          setLocalQuantities(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          return
+                                        }
+
+                                        setUpdatingQuantities(prev => new Set(prev).add(item.id))
+
+                                        const { error } = await supabase
+                                          .from("inventory")
+                                          .update({ quantity: newQty })
+                                          .eq("id", item.id)
+                                          .eq("user_id", user.id)
+
+                                        setUpdatingQuantities(prev => {
+                                          const updated = new Set(prev)
+                                          updated.delete(item.id)
+                                          return updated
+                                        })
+
+                                        if (error) {
+                                          console.error("Error updating quantity:", error)
+                                          showToast("error", `Failed to update quantity: ${error.message}`)
+                                          setLocalQuantities(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                        } else {
+                                          setLocalQuantities(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          await refetchItems()
+                                          showToast("success", "Quantity updated")
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                          e.preventDefault()
+                                        }
+                                        if (e.key === 'Enter') {
+                                          e.currentTarget.blur()
+                                        }
+                                        if ((e.key === 'Delete' || e.key === 'Backspace') &&
+                                            e.currentTarget.selectionStart === 0 &&
+                                            e.currentTarget.selectionEnd === e.currentTarget.value.length) {
+                                          e.preventDefault()
+                                          setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
+                                        }
+                                      }}
+                                      disabled={updatingQuantities.has(item.id)}
+                                      className={`w-24 h-9 text-sm text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                        updatingQuantities.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
+                                      }`}
+                                      title="Edit quantity"
+                                    />
+                                  </div>
+
+                                  {/* Delete Button */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(item.id)}
+                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete item"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </div>
-
-                                {/* Date */}
-                                <div className="inline-flex items-center text-sm text-gray-600 gap-1.5 whitespace-nowrap">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
-                                </div>
-
-                                {/* Category Dropdown */}
-                                <select
-                                  value={categorizeItem(item)}
-                                  onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                  className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                >
-                                  <option value="produce">🥬 Produce</option>
-                                  <option value="dairy">🥛 Dairy</option>
-                                  <option value="meat">🥩 Meat</option>
-                                  <option value="bakery">🍞 Bakery</option>
-                                  <option value="pantry">🥫 Pantry</option>
-                                  <option value="frozen">🧊 Frozen</option>
-                                  <option value="condiments">🧂 Condiments</option>
-                                </select>
-
-                                {/* Unit Dropdown */}
-                                <select
-                                  value={item.unit || 'count'}
-                                  onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                  className="h-8 px-3 py-0 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                >
-                                  {unitOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                  ))}
-                                </select>
-
-                                {/* Quantity Input */}
-                                <Input
-                                  type="number"
-                                  min="0.01"
-                                  step="0.01"
-                                  placeholder="0.01"
-                                  value={localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1}
-                                  onChange={(e) => {
-                                    const value = e.target.value
-                                    // Allow empty string during typing
-                                    if (value === '') {
-                                      setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
-                                      return
-                                    }
-                                    // Allow typing any number, no forced minimum during input
-                                    const numValue = parseFloat(value)
-                                    if (!isNaN(numValue)) {
-                                      setLocalQuantities(prev => ({ ...prev, [item.id]: numValue }))
-                                    }
-                                  }}
-                                  onFocus={(e) => {
-                                    // Select all text on focus for easy replacement
-                                    e.target.select()
-                                  }}
-                                  onBlur={async (e) => {
-                                    if (!user) return
-
-                                    let newQty = parseFloat(e.target.value)
-
-                                    // If empty or invalid, default to 0.01
-                                    if (isNaN(newQty) || newQty <= 0) {
-                                      newQty = 0.01
-                                    }
-
-                                    // Round to 2 decimals
-                                    newQty = Math.round(newQty * 100) / 100
-                                    const originalQty = item.quantity ?? 1
-
-                                    // Skip update if value hasn't changed
-                                    if (newQty === originalQty) {
-                                      setLocalQuantities(prev => {
-                                        const updated = { ...prev }
-                                        delete updated[item.id]
-                                        return updated
-                                      })
-                                      return
-                                    }
-
-                                    // Set updating state
-                                    setUpdatingQuantities(prev => new Set(prev).add(item.id))
-
-                                    const { error } = await supabase
-                                      .from("inventory")
-                                      .update({ quantity: newQty })
-                                      .eq("id", item.id)
-                                      .eq("user_id", user.id)
-
-                                    // Clear updating state
-                                    setUpdatingQuantities(prev => {
-                                      const updated = new Set(prev)
-                                      updated.delete(item.id)
-                                      return updated
-                                    })
-
-                                    if (error) {
-                                      console.error("Error updating quantity:", error)
-                                      showToast("error", `Failed to update quantity: ${error.message}`)
-                                      // Revert to original value
-                                      setLocalQuantities(prev => {
-                                        const updated = { ...prev }
-                                        delete updated[item.id]
-                                        return updated
-                                      })
-                                    } else {
-                                      // Clear local state and refresh
-                                      setLocalQuantities(prev => {
-                                        const updated = { ...prev }
-                                        delete updated[item.id]
-                                        return updated
-                                      })
-                                      await refetchItems()
-                                      showToast("success", "Quantity updated")
-                                    }
-                                  }}
-                                  onKeyDown={(e) => {
-                                    // Prevent negative values and scientific notation
-                                    if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                                      e.preventDefault()
-                                    }
-                                    // Save on Enter
-                                    if (e.key === 'Enter') {
-                                      e.currentTarget.blur()
-                                    }
-                                    // Clear field on Delete/Backspace when all selected
-                                    if ((e.key === 'Delete' || e.key === 'Backspace') &&
-                                        e.currentTarget.selectionStart === 0 &&
-                                        e.currentTarget.selectionEnd === e.currentTarget.value.length) {
-                                      e.preventDefault()
-                                      setLocalQuantities(prev => ({ ...prev, [item.id]: '' as any }))
-                                    }
-                                  }}
-                                  disabled={updatingQuantities.has(item.id)}
-                                  className={`w-20 h-8 text-sm text-center ${
-                                    updatingQuantities.has(item.id) ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
-                                />
-
-                                {/* Total Price */}
-                                <div className="text-base font-bold text-gray-900 whitespace-nowrap min-w-[70px] text-right">
-                                  ${(Number(item.price) * Number(localQuantities[item.id] ?? item.quantity ?? 1)).toFixed(2)}
-                                </div>
-
-                                {/* Delete Button */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDelete(item.id)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
                               </div>
                             </div>
                           )
