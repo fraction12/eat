@@ -13,7 +13,7 @@ import ReactWebcam from "react-webcam"
 import { ToastContainer, showToast } from "@/components/Toast"
 import Link from "next/link"
 
-type Item = { id: string; item: string; price: number; quantity: number; created_at: string }
+type Item = { id: string; item: string; price: number; quantity: number; created_at: string; category?: Category }
 
 type Category = 'produce' | 'dairy' | 'meat' | 'bakery' | 'pantry' | 'frozen' | 'condiments'
 
@@ -37,33 +37,39 @@ const categoryColors: Record<Category, { ring: string, borderLeft: string, iconC
   condiments: { ring: 'ring-2 ring-orange-400', borderLeft: 'border-l-4 border-l-orange-500', iconColor: 'text-orange-600' },
 }
 
-// Categorize items based on name
-function categorizeItem(itemName: string): Category {
-  const name = itemName.toLowerCase()
+// Categorize items based on stored category or name
+function categorizeItem(item: Item | string): Category {
+  // If item object with stored category, use that
+  if (typeof item === 'object' && item.category) {
+    return item.category
+  }
+
+  // Otherwise, auto-categorize by name
+  const name = typeof item === 'string' ? item.toLowerCase() : item.item.toLowerCase()
 
   // Produce
   const produce = ['apple', 'banana', 'orange', 'tomato', 'lettuce', 'carrot', 'potato', 'onion', 'garlic', 'pepper', 'broccoli', 'spinach', 'cucumber', 'avocado', 'strawberry', 'grape', 'lemon', 'lime', 'berry', 'fruit', 'vegetable', 'salad', 'celery', 'mushroom', 'corn', 'peas']
-  if (produce.some(item => name.includes(item))) return 'produce'
+  if (produce.some(keyword => name.includes(keyword))) return 'produce'
 
   // Dairy
   const dairy = ['milk', 'cheese', 'yogurt', 'butter', 'cream', 'egg', 'cottage', 'cheddar', 'mozzarella', 'parmesan', 'sour cream', 'whipped cream']
-  if (dairy.some(item => name.includes(item))) return 'dairy'
+  if (dairy.some(keyword => name.includes(keyword))) return 'dairy'
 
   // Meat & Seafood
   const meat = ['chicken', 'beef', 'pork', 'turkey', 'bacon', 'sausage', 'ham', 'steak', 'fish', 'salmon', 'tuna', 'shrimp', 'meat', 'ground beef', 'lamb', 'duck']
-  if (meat.some(item => name.includes(item))) return 'meat'
+  if (meat.some(keyword => name.includes(keyword))) return 'meat'
 
   // Bakery
   const bakery = ['bread', 'bagel', 'muffin', 'croissant', 'donut', 'bun', 'roll', 'tortilla', 'pita', 'baguette', 'cake', 'cookie', 'pastry']
-  if (bakery.some(item => name.includes(item))) return 'bakery'
+  if (bakery.some(keyword => name.includes(keyword))) return 'bakery'
 
   // Frozen
   const frozen = ['frozen', 'ice cream', 'popsicle', 'ice', 'pizza']
-  if (frozen.some(item => name.includes(item))) return 'frozen'
+  if (frozen.some(keyword => name.includes(keyword))) return 'frozen'
 
   // Condiments
   const condiments = ['sauce', 'ketchup', 'mustard', 'mayo', 'dressing', 'oil', 'vinegar', 'salt', 'pepper', 'spice', 'seasoning', 'syrup', 'jam', 'jelly', 'honey', 'salsa', 'hot sauce']
-  if (condiments.some(item => name.includes(item))) return 'condiments'
+  if (condiments.some(keyword => name.includes(keyword))) return 'condiments'
 
   // Default to pantry
   return 'pantry'
@@ -132,6 +138,13 @@ export default function InventoryPage() {
     await supabase.from("inventory").delete().eq("id", id)
     setItems((prev) => prev.filter((i) => i.id !== id))
     showToast("success", "Item removed from inventory")
+  }
+
+  const handleCategoryChange = async (id: string, newCategory: Category) => {
+    await supabase.from("inventory").update({ category: newCategory }).eq("id", id)
+    const { data } = await supabase.from("inventory").select("*").order("created_at", { ascending: false })
+    setItems((data ?? []) as Item[])
+    showToast("success", "Category updated")
   }
 
   const fileToDataURL = (f: File) =>
@@ -249,7 +262,7 @@ export default function InventoryPage() {
       return false
     }
     // Category filter
-    if (filterCategory !== 'all' && categorizeItem(item.item) !== filterCategory) {
+    if (filterCategory !== 'all' && categorizeItem(item) !== filterCategory) {
       return false
     }
     return true
@@ -257,7 +270,7 @@ export default function InventoryPage() {
 
   // Group items by category
   const itemsByCategory = filteredItems.reduce((acc, item) => {
-    const category = categorizeItem(item.item)
+    const category = categorizeItem(item)
     if (!acc[category]) acc[category] = []
     acc[category].push(item)
     return acc
@@ -273,7 +286,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -615,13 +628,27 @@ export default function InventoryPage() {
                                       </span>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                                  <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
                                     <span>${Number(item.price).toFixed(2)} each</span>
                                     <span>•</span>
                                     <span className="flex items-center gap-1">
                                       <Clock className="h-3 w-3" />
                                       {daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld} days ago`}
                                     </span>
+                                    <span>•</span>
+                                    <select
+                                      value={categorizeItem(item)}
+                                      onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
+                                      className="text-xs px-2 py-1 border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                      <option value="produce">🥬 Produce</option>
+                                      <option value="dairy">🥛 Dairy</option>
+                                      <option value="meat">🥩 Meat</option>
+                                      <option value="bakery">🍞 Bakery</option>
+                                      <option value="pantry">🥫 Pantry</option>
+                                      <option value="frozen">🧊 Frozen</option>
+                                      <option value="condiments">🧂 Condiments</option>
+                                    </select>
                                   </div>
                                 </div>
 
