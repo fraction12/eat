@@ -121,7 +121,8 @@ export default function RecipesPage() {
         })
 
         if (response.ok) {
-          setFavorites(favorites.filter((fav) => fav.recipe_link !== recipe.link))
+          // Refetch to ensure consistency
+          await fetchFavorites()
           showToast("success", "Removed from favorites")
         } else {
           showToast("error", "Failed to remove from favorites")
@@ -146,11 +147,9 @@ export default function RecipesPage() {
         })
 
         if (response.ok) {
-          const data = await response.json()
-          if (data.favorite) {
-            setFavorites([...favorites, data.favorite])
-            showToast("success", "Added to favorites")
-          }
+          // Refetch to ensure consistency
+          await fetchFavorites()
+          showToast("success", "Added to favorites")
         } else {
           showToast("error", "Failed to add to favorites")
         }
