@@ -1,0 +1,182 @@
+"use client"
+
+import { X, ChefHat, Heart, Bookmark, ExternalLink, Clock, Users, Tag } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+type RecipeDetailModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  recipe: {
+    title: string
+    link: string
+    description: string
+    image: string
+    pubDate?: string
+    source?: string
+    category?: string
+    area?: string
+    ingredients?: string[]
+    instructions?: string
+    tags?: string[]
+    videoUrl?: string
+  } | null
+  onFavorite?: () => void
+  onSaveToCollection?: () => void
+  isFavorited?: boolean
+}
+
+export function RecipeDetailModal({
+  isOpen,
+  onClose,
+  recipe,
+  onFavorite,
+  onSaveToCollection,
+  isFavorited = false
+}: RecipeDetailModalProps) {
+  if (!isOpen || !recipe) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header with Image */}
+        <div className="relative h-64 bg-gray-200">
+          <img
+            src={recipe.image}
+            alt={recipe.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"
+            }}
+          />
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Action Buttons */}
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            {onFavorite && (
+              <button
+                onClick={onFavorite}
+                className={`p-3 rounded-full shadow-lg transition-all ${
+                  isFavorited
+                    ? "bg-white text-red-500"
+                    : "bg-white/90 hover:bg-white text-gray-700"
+                }`}
+                title="Favorite"
+              >
+                <Heart className={`h-5 w-5 ${isFavorited ? "fill-current" : ""}`} />
+              </button>
+            )}
+            {onSaveToCollection && (
+              <button
+                onClick={onSaveToCollection}
+                className="p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-colors"
+                title="Save to collection"
+              >
+                <Bookmark className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Title and Source */}
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{recipe.title}</h2>
+          {recipe.source && (
+            <p className="text-sm text-gray-600 mb-4">From {recipe.source}</p>
+          )}
+
+          {/* Metadata */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {recipe.category && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                <Tag className="h-3 w-3" />
+                {recipe.category}
+              </span>
+            )}
+            {recipe.area && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                {recipe.area}
+              </span>
+            )}
+            {recipe.tags && recipe.tags.slice(0, 3).map((tag, idx) => (
+              <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Description */}
+          {recipe.description && (
+            <div className="mb-6">
+              <p className="text-gray-700 leading-relaxed">{recipe.description}</p>
+            </div>
+          )}
+
+          {/* Ingredients */}
+          {recipe.ingredients && recipe.ingredients.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Ingredients</h3>
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-orange-500 mt-1">•</span>
+                    <span className="text-gray-700">{ingredient}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Instructions */}
+          {recipe.instructions && (
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Instructions</h3>
+              <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                {recipe.instructions}
+              </div>
+            </div>
+          )}
+
+          {/* Video Link */}
+          {recipe.videoUrl && (
+            <div className="mb-6">
+              <a
+                href={recipe.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Watch Video Tutorial
+              </a>
+            </div>
+          )}
+
+          {/* Cook Button */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <a
+              href={recipe.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
+            >
+              <ChefHat className="h-5 w-5" />
+              View Full Recipe
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

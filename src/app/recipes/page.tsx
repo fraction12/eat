@@ -10,6 +10,7 @@ import {
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
 import { CollectionsModal } from "@/components/CollectionsModal"
+import { RecipeDetailModal } from "@/components/RecipeDetailModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/AuthProvider"
@@ -78,6 +79,7 @@ export default function RecipesPage() {
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
   const [showManageFeedsModal, setShowManageFeedsModal] = useState(false)
   const [showCollectionsModal, setShowCollectionsModal] = useState(false)
+  const [showRecipeDetail, setShowRecipeDetail] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState<RSSRecipe | null>(null)
 
   // Fetch user's feeds and add default if none exist
@@ -139,6 +141,11 @@ export default function RecipesPage() {
   const saveToCollection = (recipe: RSSRecipe) => {
     setSelectedRecipe(recipe)
     setShowCollectionsModal(true)
+  }
+
+  const openRecipeDetail = (recipe: RSSRecipe) => {
+    setSelectedRecipe(recipe)
+    setShowRecipeDetail(true)
   }
 
   const handleCollectionSelect = async (collection: any) => {
@@ -652,7 +659,8 @@ export default function RecipesPage() {
                 return (
                   <div
                     key={idx}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group"
+                    onClick={() => openRecipeDetail(recipe)}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group cursor-pointer"
                   >
                     <div className="relative mb-3">
                       <img
@@ -725,7 +733,8 @@ export default function RecipesPage() {
                 return (
                   <div
                     key={idx}
-                    className={`group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ${
+                    onClick={() => openRecipeDetail(recipe)}
+                    className={`group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer ${
                       canMake ? 'ring-2 ring-green-400' : ''
                     }`}
                   >
@@ -1042,7 +1051,8 @@ export default function RecipesPage() {
                     return (
                       <tr
                         key={idx}
-                        className={`transition-all duration-150 ${
+                        onClick={() => openRecipeDetail(recipe)}
+                        className={`transition-all duration-150 cursor-pointer ${
                           idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                         } ${
                           canMake ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-transparent'
@@ -1246,6 +1256,27 @@ export default function RecipesPage() {
         }}
         onCollectionSelect={selectedRecipe ? handleCollectionSelect : undefined}
         mode={selectedRecipe ? "select" : "manage"}
+      />
+
+      <RecipeDetailModal
+        isOpen={showRecipeDetail}
+        onClose={() => {
+          setShowRecipeDetail(false)
+          setSelectedRecipe(null)
+        }}
+        recipe={selectedRecipe}
+        onFavorite={() => {
+          if (selectedRecipe) {
+            toggleFavorite(selectedRecipe)
+          }
+        }}
+        onSaveToCollection={() => {
+          setShowRecipeDetail(false)
+          if (selectedRecipe) {
+            saveToCollection(selectedRecipe)
+          }
+        }}
+        isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
       />
 
       <ToastContainer />
