@@ -391,6 +391,26 @@ export default function RecipesPage() {
       allRecipes.push(...recipesWithSource)
     })
 
+    // If showing favorites only, ensure all favorites are included
+    // (even if they're from feeds that are no longer active)
+    if (showFavoritesOnly) {
+      const feedRecipeLinks = new Set(allRecipes.map(r => r.link))
+
+      favorites.forEach((fav) => {
+        if (!feedRecipeLinks.has(fav.recipe_link)) {
+          // Add favorite as a recipe if it's not in the feed recipes
+          allRecipes.push({
+            title: fav.recipe_title,
+            link: fav.recipe_link,
+            description: fav.recipe_description,
+            image: fav.recipe_image,
+            pubDate: fav.created_at,
+            source: fav.recipe_source,
+          })
+        }
+      })
+    }
+
     return allRecipes
   }
 
