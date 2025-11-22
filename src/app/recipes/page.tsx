@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check } from "lucide-react"
+import { Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { supabase } from "@/lib/supabase"
 
@@ -34,6 +34,7 @@ type InventoryItem = {
 export default function RecipesPage() {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
+  const [feedWarnings, setFeedWarnings] = useState<Record<string, string>>({})
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -116,9 +117,19 @@ export default function RecipesPage() {
       if (response.ok) {
         const data = await response.json()
         setFeedRecipes((prev) => ({ ...prev, [feedId]: data.recipes || [] }))
+
+        // Store warning if present
+        if (data.warning) {
+          setFeedWarnings((prev) => ({ ...prev, [feedId]: data.warning }))
+        }
+      } else {
+        setFeedRecipes((prev) => ({ ...prev, [feedId]: [] }))
+        setFeedWarnings((prev) => ({ ...prev, [feedId]: 'Failed to load feed' }))
       }
     } catch (error) {
       console.error(`Failed to fetch recipes for feed ${feedId}:`, error)
+      setFeedRecipes((prev) => ({ ...prev, [feedId]: [] }))
+      setFeedWarnings((prev) => ({ ...prev, [feedId]: 'Network error loading feed' }))
     }
   }
 
@@ -254,7 +265,22 @@ export default function RecipesPage() {
                   </div>
                 ) : feedRecipes[feed.id].length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-600">No recipes found in this feed</p>
+                    {feedWarnings[feed.id] ? (
+                      <div className="max-w-md mx-auto">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-3">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                            <div className="text-left">
+                              <p className="font-semibold text-yellow-900 mb-1">Unable to load feed</p>
+                              <p className="text-sm text-yellow-700">{feedWarnings[feed.id]}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500">Try checking the feed URL or contact the feed provider.</p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-600">No recipes found in this feed</p>
+                    )}
                   </div>
                 ) : (() => {
                   const filteredRecipes = filterRecipes(feedRecipes[feed.id])

@@ -11,28 +11,76 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Feed URL is required" }, { status: 400 })
     }
 
-    // Fetch the RSS feed
-    const response = await fetch(feedUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; RecipeBot/1.0)',
-      },
-    })
+    // Fetch the RSS feed with timeout and better headers
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch feed: ${response.status}`)
+    try {
+      const response = await fetch(feedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
+        },
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        console.error(`Feed fetch failed: ${response.status} - ${feedUrl}`)
+
+        // Return empty recipes array instead of error for better UX
+        if (response.status === 404) {
+          return NextResponse.json({
+            recipes: [],
+            warning: `Feed not found (404). The URL may be incorrect or the feed may have been removed.`
+          })
+        }
+
+        if (response.status === 403 || response.status === 401) {
+          return NextResponse.json({
+            recipes: [],
+            warning: `Access denied to feed. It may require authentication or block automated requests.`
+          })
+        }
+
+        return NextResponse.json({
+          recipes: [],
+          warning: `Failed to fetch feed (HTTP ${response.status})`
+        })
+      }
+
+      const xmlText = await response.text()
+
+      // Check if we actually got XML
+      if (!xmlText.includes('<rss') && !xmlText.includes('<feed') && !xmlText.includes('<?xml')) {
+        return NextResponse.json({
+          recipes: [],
+          warning: 'Feed URL did not return valid RSS/XML content'
+        })
+      }
+
+      // Parse RSS XML manually (simple parser for common RSS formats)
+      const recipes = parseRSSFeed(xmlText)
+
+      return NextResponse.json({ recipes })
+    } catch (fetchErr: any) {
+      clearTimeout(timeoutId)
+
+      if (fetchErr.name === 'AbortError') {
+        return NextResponse.json({
+          recipes: [],
+          warning: 'Feed request timed out after 10 seconds'
+        })
+      }
+
+      throw fetchErr
     }
-
-    const xmlText = await response.text()
-
-    // Parse RSS XML manually (simple parser for common RSS formats)
-    const recipes = parseRSSFeed(xmlText)
-
-    return NextResponse.json({ recipes })
   } catch (err: any) {
     console.error("🚨 RSS parse error:", err)
     return NextResponse.json(
-      { ok: false, error: err.message || String(err) },
-      { status: 500 }
+      { recipes: [], error: err.message || String(err), warning: 'Unable to parse feed' },
+      { status: 200 } // Return 200 with empty recipes instead of 500
     )
   }
 }
