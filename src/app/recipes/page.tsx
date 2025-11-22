@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, Plus, ExternalLink, Trash2, Rss } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
+import { supabase } from "@/lib/supabase"
 
 type RSSRecipe = {
   title: string
@@ -21,17 +23,39 @@ type Feed = {
   created_at: string
 }
 
+type InventoryItem = {
+  id: string
+  item: string
+  price: number
+  quantity: number
+  created_at: string
+}
+
 export default function RecipesPage() {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
     fetchFeeds()
+    fetchInventory()
   }, [])
+
+  const fetchInventory = async () => {
+    const { data, error } = await supabase
+      .from("inventory")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (!error && data) {
+      setInventory(data as InventoryItem[])
+    }
+  }
 
   const fetchFeeds = async () => {
     setIsLoadingFeeds(true)
@@ -119,19 +143,69 @@ export default function RecipesPage() {
     }
   }
 
+  // Check if recipe can be made with inventory items
+  const canMakeRecipe = (recipe: RSSRecipe): number => {
+    if (inventory.length === 0) return 0
+
+    const recipeText = `${recipe.title} ${recipe.description}`.toLowerCase()
+    let matchCount = 0
+
+    inventory.forEach((item) => {
+      const itemName = item.item.toLowerCase()
+      // Check for whole word matches
+      const regex = new RegExp(`\\b${itemName}\\b`, 'i')
+      if (regex.test(recipeText)) {
+        matchCount++
+      }
+    })
+
+    return matchCount
+  }
+
+  // Filter recipes based on search query
+  const filterRecipes = (recipes: RSSRecipe[]) => {
+    if (!searchQuery.trim()) return recipes
+
+    const query = searchQuery.toLowerCase()
+    return recipes.filter((recipe) => {
+      const searchText = `${recipe.title} ${recipe.description}`.toLowerCase()
+      return searchText.includes(query)
+    })
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
-            <p className="text-gray-600">Discover recipes from your favorite sources</p>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
+              <p className="text-gray-600">Discover recipes from your favorite sources</p>
+            </div>
+            <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
+              <Plus className="h-5 w-5" />
+              Add Feed
+            </Button>
           </div>
-          <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
-            <Plus className="h-5 w-5" />
-            Add Feed
-          </Button>
+
+          {/* Search Bar */}
+          <div className="relative max-w-2xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search recipes by name or ingredients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-orange-500"
+            />
+            {inventory.length > 0 && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">
+                <Check className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700">{inventory.length} items in inventory</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* RSS Feed Sections */}
@@ -182,55 +256,80 @@ export default function RecipesPage() {
                   <div className="text-center py-8">
                     <p className="text-gray-600">No recipes found in this feed</p>
                   </div>
-                ) : (
-                  <>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {feedRecipes[feed.id].map((recipe, idx) => (
-                        <a
-                          key={idx}
-                          href={recipe.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group bg-gray-50 rounded-xl overflow-hidden hover:shadow-xl transition-all border border-gray-200"
-                        >
-                          {/* Recipe Image */}
-                          <div className="relative h-56 bg-gray-200 overflow-hidden">
-                            <img
-                              src={recipe.image}
-                              alt={recipe.title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                              <ExternalLink className="h-5 w-5 text-gray-900" />
-                            </div>
-                          </div>
+                ) : (() => {
+                  const filteredRecipes = filterRecipes(feedRecipes[feed.id])
+                  // Sort by inventory matches (highest first)
+                  const sortedRecipes = [...filteredRecipes].sort((a, b) => {
+                    return canMakeRecipe(b) - canMakeRecipe(a)
+                  })
 
-                          {/* Recipe Info */}
-                          <div className="p-5">
-                            <h4 className="font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors text-lg leading-tight mb-2">
-                              {recipe.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                              {recipe.description}
-                            </p>
-                          </div>
-                        </a>
-                      ))}
+                  return filteredRecipes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600">No recipes match your search</p>
                     </div>
-                    {feedRecipes[feed.id].length > 20 && (
-                      <div className="text-center mt-6">
-                        <p className="text-sm text-gray-500">
-                          Showing {Math.min(20, feedRecipes[feed.id].length)} of {feedRecipes[feed.id].length} recipes
-                        </p>
+                  ) : (
+                    <>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {sortedRecipes.map((recipe, idx) => {
+                          const matchCount = canMakeRecipe(recipe)
+                          const canMake = matchCount > 0
+
+                          return (
+                            <a
+                              key={idx}
+                              href={recipe.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`group bg-gray-50 rounded-xl overflow-hidden hover:shadow-xl transition-all border-2 ${
+                                canMake ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200'
+                              }`}
+                            >
+                              {/* Recipe Image */}
+                              <div className="relative h-56 bg-gray-200 overflow-hidden">
+                                <img
+                                  src={recipe.image}
+                                  alt={recipe.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image Available%3C/svg%3E"
+                                  }}
+                                />
+                                {canMake && (
+                                  <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full font-semibold text-sm shadow-lg flex items-center gap-1.5">
+                                    <Check className="h-4 w-4" />
+                                    {matchCount} {matchCount === 1 ? 'ingredient' : 'ingredients'} in stock
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                  <ExternalLink className="h-5 w-5 text-gray-900" />
+                                </div>
+                              </div>
+
+                              {/* Recipe Info */}
+                              <div className="p-5">
+                                <h4 className="font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors text-lg leading-tight mb-2">
+                                  {recipe.title}
+                                </h4>
+                                <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                                  {recipe.description}
+                                </p>
+                              </div>
+                            </a>
+                          )
+                        })}
                       </div>
-                    )}
-                  </>
-                )}
+                      {feedRecipes[feed.id].length > filteredRecipes.length && (
+                        <div className="text-center mt-6">
+                          <p className="text-sm text-gray-500">
+                            Showing {filteredRecipes.length} of {feedRecipes[feed.id].length} recipes
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             ))}
           </div>

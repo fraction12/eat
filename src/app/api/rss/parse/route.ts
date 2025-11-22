@@ -52,17 +52,23 @@ function parseRSSFeed(xmlText: string): any[] {
     const pubDate = extractTag(item, 'pubDate')
 
     // Try to extract image from various possible tags
-    const image =
+    let image =
       extractTag(item, 'media:content', 'url') ||
       extractTag(item, 'enclosure', 'url') ||
+      extractTag(item, 'media:thumbnail', 'url') ||
       extractImageFromDescription(description)
+
+    // Clean the image URL
+    if (image) {
+      image = cleanHtml(image)
+    }
 
     if (title && link) {
       recipes.push({
         title: cleanHtml(title),
         link: cleanHtml(link),
         description: cleanHtml(stripHtmlTags(description)),
-        image: image || '/placeholder-recipe.jpg',
+        image: image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image Available%3C/svg%3E',
         pubDate: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
       })
     }
