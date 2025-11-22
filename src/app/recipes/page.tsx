@@ -13,6 +13,9 @@ type RSSRecipe = {
   description: string
   image: string
   pubDate: string
+  source?: string
+  category?: string
+  area?: string
 }
 
 type Feed = {
@@ -35,9 +38,13 @@ export default function RecipesPage() {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedRecipes, setFeedRecipes] = useState<Record<string, RSSRecipe[]>>({})
   const [feedWarnings, setFeedWarnings] = useState<Record<string, string>>({})
+  const [mealDBRecipes, setMealDBRecipes] = useState<RSSRecipe[]>([])
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
+  const [isLoadingMealDB, setIsLoadingMealDB] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const recipesPerPage = 20
 
   const [showAddFeedModal, setShowAddFeedModal] = useState(false)
 
@@ -45,6 +52,7 @@ export default function RecipesPage() {
   useEffect(() => {
     fetchFeeds()
     fetchInventory()
+    fetchMealDBRecipes()
   }, [])
 
   const fetchInventory = async () => {
@@ -55,6 +63,21 @@ export default function RecipesPage() {
 
     if (!error && data) {
       setInventory(data as InventoryItem[])
+    }
+  }
+
+  const fetchMealDBRecipes = async () => {
+    setIsLoadingMealDB(true)
+    try {
+      const response = await fetch("/api/themealdb")
+      if (response.ok) {
+        const data = await response.json()
+        setMealDBRecipes(data.recipes || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch TheMealDB recipes:", error)
+    } finally {
+      setIsLoadingMealDB(false)
     }
   }
 
@@ -184,6 +207,50 @@ export default function RecipesPage() {
     })
   }
 
+  // Combine all recipes from all sources
+  const getAllRecipes = (): RSSRecipe[] => {
+    const allRecipes: RSSRecipe[] = []
+
+    // Add RSS feed recipes
+    Object.entries(feedRecipes).forEach(([feedId, recipes]) => {
+      const feed = feeds.find((f) => f.id === feedId)
+      const recipesWithSource = recipes.map((recipe) => ({
+        ...recipe,
+        source: feed?.feed_name || "RSS Feed",
+      }))
+      allRecipes.push(...recipesWithSource)
+    })
+
+    // Add TheMealDB recipes
+    allRecipes.push(...mealDBRecipes)
+
+    return allRecipes
+  }
+
+  // Get paginated recipes
+  const getPaginatedRecipes = () => {
+    const allRecipes = getAllRecipes()
+    const filtered = filterRecipes(allRecipes)
+
+    // Sort by inventory matches (highest first)
+    const sorted = [...filtered].sort((a, b) => {
+      return canMakeRecipe(b) - canMakeRecipe(a)
+    })
+
+    const startIndex = (currentPage - 1) * recipesPerPage
+    const endIndex = startIndex + recipesPerPage
+    const paginated = sorted.slice(startIndex, endIndex)
+
+    return {
+      recipes: paginated,
+      total: sorted.length,
+      totalPages: Math.ceil(sorted.length / recipesPerPage),
+    }
+  }
+
+  const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
+  const isLoading = isLoadingFeeds || isLoadingMealDB
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -192,11 +259,11 @@ export default function RecipesPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Recipe Hub</h1>
-              <p className="text-gray-600">Discover recipes from your favorite sources</p>
+              <p className="text-gray-600">Discover recipes from RSS feeds and TheMealDB</p>
             </div>
             <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
               <Plus className="h-5 w-5" />
-              Add Feed
+              Add RSS Feed
             </Button>
           </div>
 
@@ -207,7 +274,10 @@ export default function RecipesPage() {
               type="text"
               placeholder="Search recipes by name or ingredients..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1) // Reset to first page on search
+              }}
               className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-orange-500"
             />
             {inventory.length > 0 && (
@@ -219,145 +289,191 @@ export default function RecipesPage() {
           </div>
         </div>
 
-        {/* RSS Feed Sections */}
-        {isLoadingFeeds ? (
+        {/* Unified Recipe Table */}
+        {isLoading ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading recipe feeds...</p>
+            <p className="text-gray-600">Loading recipes from all sources...</p>
           </div>
-        ) : feeds.length === 0 ? (
+        ) : paginatedRecipes.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <Rss className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">No recipe feeds yet</p>
-            <p className="text-gray-400 text-sm mt-2">Add your first recipe feed to get started!</p>
-            <Button onClick={() => setShowAddFeedModal(true)} className="mt-4 gap-2">
-              <Plus className="h-5 w-5" />
-              Add Your First Feed
-            </Button>
+            <p className="text-gray-600 text-lg">
+              {total === 0 ? "No recipes found" : "No recipes match your search"}
+            </p>
+            <p className="text-gray-400 text-sm mt-2">
+              {total === 0 ? "Add RSS feeds or check back later for TheMealDB recipes" : "Try a different search term"}
+            </p>
           </div>
         ) : (
-          <div className="space-y-12">
-            {feeds.map((feed) => (
-              <div key={feed.id} className="bg-white rounded-2xl shadow-xl p-6">
-                {/* Feed Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900">{feed.feed_name}</h3>
-                    {feed.feed_description && (
-                      <p className="text-sm text-gray-600 mt-1">{feed.feed_description}</p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteFeed(feed.id)}
-                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            {/* Table Header with Count */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  All Recipes ({total} total)
+                </h2>
+                <div className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
                 </div>
+              </div>
+            </div>
 
-                {/* Recipes Grid */}
-                {!feedRecipes[feed.id] ? (
-                  <div className="text-center py-8">
-                    <Loader2 className="h-8 w-8 text-orange-600 animate-spin mx-auto mb-2" />
-                    <p className="text-gray-600 text-sm">Loading recipes...</p>
-                  </div>
-                ) : feedRecipes[feed.id].length === 0 ? (
-                  <div className="text-center py-8">
-                    {feedWarnings[feed.id] ? (
-                      <div className="max-w-md mx-auto">
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-3">
-                          <div className="flex items-start gap-3">
-                            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                            <div className="text-left">
-                              <p className="font-semibold text-yellow-900 mb-1">Unable to load feed</p>
-                              <p className="text-sm text-yellow-700">{feedWarnings[feed.id]}</p>
+            {/* Recipe Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Recipe
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Source
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ingredients Match
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedRecipes.map((recipe, idx) => {
+                    const matchCount = canMakeRecipe(recipe)
+                    const canMake = matchCount > 0
+
+                    return (
+                      <tr
+                        key={idx}
+                        className={`hover:bg-gray-50 transition-colors ${
+                          canMake ? 'bg-green-50/50' : ''
+                        }`}
+                      >
+                        {/* Recipe Info */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={recipe.image}
+                              alt={recipe.title}
+                              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect fill='%23e5e7eb' width='64' height='64'/%3E%3C/svg%3E"
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 line-clamp-1">
+                                {recipe.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                                {recipe.description}
+                              </p>
+                              {recipe.category && (
+                                <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
+                                  {recipe.category}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </div>
-                        <p className="text-sm text-gray-500">Try checking the feed URL or contact the feed provider.</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600">No recipes found in this feed</p>
-                    )}
+                        </td>
+
+                        {/* Source */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{recipe.source || "Unknown"}</span>
+                          {recipe.area && (
+                            <p className="text-xs text-gray-500 mt-1">{recipe.area}</p>
+                          )}
+                        </td>
+
+                        {/* Ingredients Match */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {canMake ? (
+                            <div className="flex items-center gap-1.5 text-green-700">
+                              <Check className="h-4 w-4" />
+                              <span className="text-sm font-semibold">
+                                {matchCount} {matchCount === 1 ? 'match' : 'matches'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <a
+                            href={recipe.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-800 font-medium text-sm"
+                          >
+                            View Recipe
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {(currentPage - 1) * recipesPerPage + 1} to{" "}
+                    {Math.min(currentPage * recipesPerPage, total)} of {total} recipes
                   </div>
-                ) : (() => {
-                  const filteredRecipes = filterRecipes(feedRecipes[feed.id])
-                  // Sort by inventory matches (highest first)
-                  const sortedRecipes = [...filteredRecipes].sort((a, b) => {
-                    return canMakeRecipe(b) - canMakeRecipe(a)
-                  })
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum
+                        if (totalPages <= 5) {
+                          pageNum = i + 1
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i
+                        } else {
+                          pageNum = currentPage - 2 + i
+                        }
 
-                  return filteredRecipes.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-600">No recipes match your search</p>
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-10"
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
                     </div>
-                  ) : (
-                    <>
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {sortedRecipes.map((recipe, idx) => {
-                          const matchCount = canMakeRecipe(recipe)
-                          const canMake = matchCount > 0
-
-                          return (
-                            <a
-                              key={idx}
-                              href={recipe.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`group bg-gray-50 rounded-xl overflow-hidden hover:shadow-xl transition-all border-2 ${
-                                canMake ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200'
-                              }`}
-                            >
-                              {/* Recipe Image */}
-                              <div className="relative h-56 bg-gray-200 overflow-hidden">
-                                <img
-                                  src={recipe.image}
-                                  alt={recipe.title}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image Available%3C/svg%3E"
-                                  }}
-                                />
-                                {canMake && (
-                                  <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full font-semibold text-sm shadow-lg flex items-center gap-1.5">
-                                    <Check className="h-4 w-4" />
-                                    {matchCount} {matchCount === 1 ? 'ingredient' : 'ingredients'} in stock
-                                  </div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                  <ExternalLink className="h-5 w-5 text-gray-900" />
-                                </div>
-                              </div>
-
-                              {/* Recipe Info */}
-                              <div className="p-5">
-                                <h4 className="font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors text-lg leading-tight mb-2">
-                                  {recipe.title}
-                                </h4>
-                                <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                                  {recipe.description}
-                                </p>
-                              </div>
-                            </a>
-                          )
-                        })}
-                      </div>
-                      {feedRecipes[feed.id].length > filteredRecipes.length && (
-                        <div className="text-center mt-6">
-                          <p className="text-sm text-gray-500">
-                            Showing {filteredRecipes.length} of {feedRecipes[feed.id].length} recipes
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
