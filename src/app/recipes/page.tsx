@@ -277,8 +277,6 @@ export default function RecipesPage() {
       },
     ]
 
-    console.log("Adding 15 default recipe feeds...")
-
     // Add all feeds in parallel
     try {
       await Promise.all(

@@ -101,8 +101,6 @@ Return as a JSON array of recipe objects.`
 
     const recipes = Array.isArray(parsed) ? parsed : [];
 
-    console.log("🍳 Recipe suggestions generated:", recipes.length);
-
     return NextResponse.json({ recipes });
   } catch (err: any) {
     console.error("🚨 Recipes route error:", err);
