@@ -33,6 +33,7 @@ type ScrapedRecipe = {
   videoUrl?: string
   sourceUrl?: string
   sourceName?: string
+  tags?: string[]
 }
 
 type RSSRecipe = {
