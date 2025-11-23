@@ -1,7 +1,15 @@
 "use client"
 
-import { X, ChefHat, Heart, Bookmark, ExternalLink, Clock, Users, Tag } from "lucide-react"
+import { X, ChefHat, Heart, Bookmark, ExternalLink, Clock, Users, Tag, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+type InventoryItem = {
+  id: string
+  item: string
+  price: number
+  quantity: number
+  created_at: string
+}
 
 type RecipeDetailModalProps = {
   isOpen: boolean
@@ -24,6 +32,7 @@ type RecipeDetailModalProps = {
   onSaveToCollection?: () => void
   isFavorited?: boolean
   isInCollection?: boolean
+  inventory?: InventoryItem[]
 }
 
 export function RecipeDetailModal({
@@ -33,9 +42,23 @@ export function RecipeDetailModal({
   onFavorite,
   onSaveToCollection,
   isFavorited = false,
-  isInCollection = false
+  isInCollection = false,
+  inventory = []
 }: RecipeDetailModalProps) {
   if (!isOpen || !recipe) return null
+
+  // Helper function to check if user has an ingredient
+  const hasIngredient = (ingredient: string): boolean => {
+    const ingredientLower = ingredient.toLowerCase()
+    return inventory.some(item =>
+      ingredientLower.includes(item.item.toLowerCase()) ||
+      item.item.toLowerCase().includes(ingredientLower.split(' ')[0])
+    )
+  }
+
+  // Count how many ingredients the user has
+  const matchedIngredients = recipe.ingredients?.filter(ing => hasIngredient(ing)) || []
+  const matchCount = matchedIngredients.length
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -134,15 +157,44 @@ export function RecipeDetailModal({
           {/* Ingredients */}
           {recipe.ingredients && recipe.ingredients.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Ingredients</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-bold text-gray-900">Ingredients</h3>
+                {matchCount > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-semibold text-green-700">
+                      You have {matchCount} of {recipe.ingredients.length}
+                    </span>
+                  </div>
+                )}
+              </div>
               <ul className="space-y-2">
-                {recipe.ingredients.map((ingredient, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-orange-500 mt-1">•</span>
-                    <span className="text-gray-700">{ingredient}</span>
-                  </li>
-                ))}
+                {recipe.ingredients.map((ingredient, idx) => {
+                  const userHasIt = hasIngredient(ingredient)
+                  return (
+                    <li
+                      key={idx}
+                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
+                        userHasIt ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                      }`}
+                    >
+                      {userHasIt ? (
+                        <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <span className="text-gray-400 mt-0.5 ml-0.5 flex-shrink-0">○</span>
+                      )}
+                      <span className={`${userHasIt ? 'text-green-900 font-medium' : 'text-gray-700'}`}>
+                        {ingredient}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
+              {matchCount > 0 && matchCount < recipe.ingredients.length && (
+                <p className="text-sm text-gray-600 mt-3 italic">
+                  You need {recipe.ingredients.length - matchCount} more ingredient{recipe.ingredients.length - matchCount !== 1 ? 's' : ''} to make this recipe
+                </p>
+              )}
             </div>
           )}
 
