@@ -146,3 +146,143 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch recipes" }, { status: 500 })
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { recipeId, recipe } = body
+
+    if (!recipeId) {
+      return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 })
+    }
+
+    if (!recipe || !recipe.title) {
+      return NextResponse.json({ error: "Recipe title is required" }, { status: 400 })
+    }
+
+    // Update recipe in database
+    const { data: updatedRecipe, error: recipeError } = await supabase
+      .from("recipes")
+      .update({
+        title: recipe.title,
+        description: recipe.description || null,
+        image_url: recipe.image || null,
+        source_url: recipe.sourceUrl || null,
+        source_name: recipe.sourceName || null,
+        category: recipe.category || null,
+        area: recipe.cuisine || null,
+        ingredients: recipe.ingredients || [],
+        instructions: recipe.instructions || null,
+        prep_time: recipe.prepTime || null,
+        cook_time: recipe.cookTime || null,
+        servings: recipe.servings || null,
+        video_url: recipe.videoUrl || null,
+        tags: recipe.tags || [],
+      })
+      .eq("id", recipeId)
+      .eq("user_id", user.id) // Ensure user owns this recipe
+      .select()
+      .single()
+
+    if (recipeError) {
+      console.error("Recipe update error:", recipeError)
+      return NextResponse.json({ error: "Failed to update recipe" }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      recipe: updatedRecipe,
+    })
+  } catch (error) {
+    console.error("Error updating recipe:", error)
+    return NextResponse.json({ error: "Failed to update recipe" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const recipeId = searchParams.get("id")
+
+    if (!recipeId) {
+      return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 })
+    }
+
+    // Delete recipe from database
+    const { error: deleteError } = await supabase
+      .from("recipes")
+      .delete()
+      .eq("id", recipeId)
+      .eq("user_id", user.id) // Ensure user owns this recipe
+
+    if (deleteError) {
+      console.error("Recipe delete error:", deleteError)
+      return NextResponse.json({ error: "Failed to delete recipe" }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+    })
+  } catch (error) {
+    console.error("Error deleting recipe:", error)
+    return NextResponse.json({ error: "Failed to delete recipe" }, { status: 500 })
+  }
+}

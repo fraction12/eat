@@ -36,13 +36,15 @@ type RecipePreviewModalProps = {
   isOpen: boolean
   onClose: () => void
   recipe: ScrapedRecipe | null
-  onSave: (recipe: ScrapedRecipe, collectionId?: string) => Promise<void>
+  recipeId?: string // If provided, we're editing an existing recipe
+  onSave: (recipe: ScrapedRecipe, collectionId?: string, recipeId?: string) => Promise<void>
 }
 
 export function RecipePreviewModal({
   isOpen,
   onClose,
   recipe: initialRecipe,
+  recipeId,
   onSave
 }: RecipePreviewModalProps) {
   const [recipe, setRecipe] = useState<ScrapedRecipe | null>(null)
@@ -81,7 +83,7 @@ export function RecipePreviewModal({
 
     setIsSaving(true)
     try {
-      await onSave(recipe, selectedCollectionId)
+      await onSave(recipe, selectedCollectionId, recipeId)
       onClose()
     } catch (error) {
       console.error("Error saving recipe:", error)
@@ -107,9 +109,9 @@ export function RecipePreviewModal({
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Preview Recipe</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{recipeId ? "Edit Recipe" : "Preview Recipe"}</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Review and edit before saving • From {recipe.sourceName}
+              {recipeId ? "Update your recipe details" : `Review and edit before saving${recipe.sourceName ? ` • From ${recipe.sourceName}` : ""}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
