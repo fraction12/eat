@@ -553,7 +553,7 @@ export default function InventoryPage() {
                         value={manualCategory}
                         onChange={(e) => setManualCategory(e.target.value as Category)}
                         disabled={isAdding}
-                        className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                        className="w-full h-10 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                       >
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
@@ -592,7 +592,7 @@ export default function InventoryPage() {
                           value={manualUnit}
                           onChange={(e) => setManualUnit(e.target.value)}
                           disabled={isAdding}
-                          className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                          className="w-full h-10 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                         >
                           {unitOptions.map(unit => (
                             <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -664,7 +664,7 @@ export default function InventoryPage() {
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value as Category | 'all')}
-                    className="h-10 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                    className="h-10 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                   >
                     <option value="all">All Categories</option>
                     <option value="produce">🥬 Produce</option>
@@ -893,7 +893,7 @@ export default function InventoryPage() {
                                   <select
                                     value={categorizeItem(item)}
                                     onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                    className="h-8 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    className="h-8 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
                                     title="Change category"
                                   >
                                     <option value="produce">🥬 Produce</option>
@@ -909,7 +909,7 @@ export default function InventoryPage() {
                                   <select
                                     value={item.unit || 'count'}
                                     onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                    className="h-8 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    className="h-8 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
                                     title="Change unit"
                                   >
                                     {unitOptions.map(opt => (
