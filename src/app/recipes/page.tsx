@@ -84,6 +84,8 @@ export default function RecipesPage() {
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true)
   const [builtInRecipes, setBuiltInRecipes] = useState<RSSRecipe[]>([])
   const [isLoadingBuiltIn, setIsLoadingBuiltIn] = useState(true)
+  const [userRecipes, setUserRecipes] = useState<RSSRecipe[]>([])
+  const [isLoadingUserRecipes, setIsLoadingUserRecipes] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [collectionRecipeUrls, setCollectionRecipeUrls] = useState<Set<string>>(new Set())
@@ -111,6 +113,7 @@ export default function RecipesPage() {
   useEffect(() => {
     if (user) {
       fetchBuiltInRecipes()
+      fetchUserRecipes()
       fetchFeeds()
       fetchInventory()
       fetchFavorites()
@@ -131,6 +134,36 @@ export default function RecipesPage() {
       console.error("Failed to fetch built-in recipes:", error)
     } finally {
       setIsLoadingBuiltIn(false)
+    }
+  }
+
+  const fetchUserRecipes = async () => {
+    setIsLoadingUserRecipes(true)
+    try {
+      const response = await fetch("/api/recipes/user")
+      if (response.ok) {
+        const data = await response.json()
+        // Convert user recipes to RSSRecipe format
+        const formattedRecipes = (data.recipes || []).map((recipe: any) => ({
+          title: recipe.title,
+          link: recipe.source_url || recipe.id,
+          description: recipe.description || "",
+          image: recipe.image_url || "",
+          pubDate: recipe.created_at,
+          source: "My Recipes",
+          category: recipe.category,
+          area: recipe.area,
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          tags: recipe.tags,
+        }))
+        setUserRecipes(formattedRecipes)
+        console.log(`Loaded ${formattedRecipes.length} user recipes`)
+      }
+    } catch (error) {
+      console.error("Failed to fetch user recipes:", error)
+    } finally {
+      setIsLoadingUserRecipes(false)
     }
   }
 
@@ -310,6 +343,7 @@ export default function RecipesPage() {
       showToast("success", "Recipe saved successfully!")
 
       // Refresh data
+      await fetchUserRecipes()
       if (collectionId) {
         await fetchCollectionRecipes()
       }
@@ -551,6 +585,9 @@ export default function RecipesPage() {
     // Add built-in recipes FIRST (so they show up even for new users)
     allRecipes.push(...builtInRecipes)
 
+    // Add user-added recipes
+    allRecipes.push(...userRecipes)
+
     // Add RSS feed recipes
     Object.entries(feedRecipes).forEach(([feedId, recipes]) => {
       const feed = feeds.find((f) => f.id === feedId)
@@ -669,7 +706,7 @@ export default function RecipesPage() {
 
   const { recipes: paginatedRecipes, total, totalPages } = getPaginatedRecipes()
   const top5Recipes = getTop5Recipes()
-  const isLoading = isLoadingBuiltIn && isLoadingFeeds
+  const isLoading = isLoadingBuiltIn && isLoadingFeeds && isLoadingUserRecipes
 
   // Get recipes user can make right now
   const getCookNowRecipes = () => {
@@ -732,7 +769,7 @@ export default function RecipesPage() {
                 <span className="hidden sm:inline">Add Feed</span>
                 <span className="sm:hidden">Add</span>
               </Button>
-              <Button onClick={() => setShowAddRecipeModal(true)} size="lg" className="gap-2">
+              <Button onClick={() => setShowAddRecipeModal(true)} size="lg" className="gap-2 bg-orange-500 hover:bg-orange-600">
                 <Plus className="h-5 w-5" />
                 <span className="hidden sm:inline">Add from URL</span>
                 <span className="sm:hidden">URL</span>
