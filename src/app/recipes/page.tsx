@@ -1007,7 +1007,7 @@ export default function RecipesPage() {
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
+                <thead className="bg-white border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[65%]">Recipe</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[10%]">Source</th>
@@ -1061,7 +1061,7 @@ export default function RecipesPage() {
             {/* Recipe Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
+                <thead className="bg-white border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[65%]">
                       Recipe
