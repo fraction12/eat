@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import Anthropic from "@anthropic-ai/sdk"
+import OpenAI from "openai"
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
 })
 
 type InventoryItem = {
@@ -142,18 +142,19 @@ Rules:
 - unmatched array should contain recipe ingredients that don't match any inventory items
 - Be conservative - round down if uncertain about quantities`
 
-  const message = await anthropic.messages.create({
-    model: "claude-3-haiku-20240307",
-    max_tokens: 2048,
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "user",
         content: prompt,
       },
     ],
+    response_format: { type: "json_object" },
+    temperature: 0.3,
   })
 
-  const responseText = message.content[0].type === "text" ? message.content[0].text : ""
+  const responseText = completion.choices[0].message.content || "{}"
 
   // Parse the JSON response
   const result = JSON.parse(responseText)

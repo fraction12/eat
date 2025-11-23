@@ -36,20 +36,20 @@ The migration will create:
 
 ### 2. Verify Environment Variables
 
-Make sure you have the Anthropic API key set in your `.env.local`:
+Make sure you have the OpenAI API key set in your `.env.local`:
 
 ```env
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-If you don't have an Anthropic API key:
-1. Go to https://console.anthropic.com/
+If you don't have an OpenAI API key:
+1. Go to https://platform.openai.com/
 2. Sign up or log in
 3. Navigate to API Keys
 4. Create a new API key
 5. Add it to your `.env.local` file
 
-**Note:** The feature uses Claude Haiku for cost efficiency (~$0.001 per recipe analysis)
+**Note:** The feature uses GPT-4o-mini for cost efficiency (~$0.0001-0.0003 per recipe analysis)
 
 ### 3. Restart Your Development Server
 
@@ -90,7 +90,7 @@ npm run dev
 
 ### AI Ingredient Matching
 
-The system uses Claude Haiku to intelligently match recipe ingredients to your inventory:
+The system uses GPT-4o-mini to intelligently match recipe ingredients to your inventory:
 
 **Example:**
 - Recipe says: "2 cups chicken breast"
@@ -135,8 +135,8 @@ Before confirming, you can:
 
 ## 💰 Cost Considerations
 
-- AI calls use Claude Haiku (cheapest model)
-- Estimated cost: ~$0.001 per recipe analysis
+- AI calls use GPT-4o-mini (cost-efficient model)
+- Estimated cost: ~$0.0001-0.0003 per recipe analysis
 - Results are not cached (for freshness)
 - Fallback to simple matching if AI fails
 
@@ -191,7 +191,7 @@ Potential improvements:
 If you encounter any issues:
 1. Check the browser console for errors
 2. Verify the database migration ran successfully
-3. Ensure your Anthropic API key is valid
+3. Ensure your OpenAI API key is valid
 4. Check that you have inventory items created
 
 Enjoy tracking your cooking! 🧑‍🍳✨
