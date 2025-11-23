@@ -1,6 +1,6 @@
 "use client"
 
-import { X, ChefHat, Heart, Bookmark, ExternalLink, Clock, Users, Tag, Check } from "lucide-react"
+import { X, ChefHat, Heart, Bookmark, ExternalLink, Clock, Users, Tag, Check, Edit2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 type InventoryItem = {
@@ -30,6 +30,8 @@ type RecipeDetailModalProps = {
   } | null
   onFavorite?: () => void
   onSaveToCollection?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
   isFavorited?: boolean
   isInCollection?: boolean
   inventory?: InventoryItem[]
@@ -41,11 +43,16 @@ export function RecipeDetailModal({
   recipe,
   onFavorite,
   onSaveToCollection,
+  onEdit,
+  onDelete,
   isFavorited = false,
   isInCollection = false,
   inventory = []
 }: RecipeDetailModalProps) {
   if (!isOpen || !recipe) return null
+
+  // Check if this is a user recipe
+  const isUserRecipe = recipe.source === "My Recipes"
 
   // Helper function to check if user has an ingredient
   const hasIngredient = (ingredient: string): boolean => {
@@ -88,33 +95,60 @@ export function RecipeDetailModal({
 
           {/* Action Buttons */}
           <div className="absolute bottom-4 right-4 flex gap-2">
-            {/* Favorite Button */}
-            {onFavorite && (
-              <button
-                onClick={onFavorite}
-                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 ${
-                  isFavorited
-                    ? "bg-white text-red-500 hover:scale-110"
-                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500 hover:scale-110"
-                }`}
-                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : ""}`} />
-              </button>
-            )}
-            {/* Bookmark Button */}
-            {onSaveToCollection && (
-              <button
-                onClick={onSaveToCollection}
-                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
-                  isInCollection
-                    ? "bg-white text-blue-600 hover:scale-110"
-                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110"
-                }`}
-                title={isInCollection ? "Already in collection" : "Save to collection"}
-              >
-                <Bookmark className={`h-5 w-5 transition-transform ${isInCollection ? "fill-current" : ""}`} />
-              </button>
+            {isUserRecipe ? (
+              <>
+                {/* Edit Button */}
+                {onEdit && (
+                  <button
+                    onClick={onEdit}
+                    className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    title="Edit recipe"
+                  >
+                    <Edit2 className="h-5 w-5" />
+                  </button>
+                )}
+                {/* Delete Button */}
+                {onDelete && (
+                  <button
+                    onClick={onDelete}
+                    className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-red-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                    title="Delete recipe"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Favorite Button */}
+                {onFavorite && (
+                  <button
+                    onClick={onFavorite}
+                    className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 ${
+                      isFavorited
+                        ? "bg-white text-red-500 hover:scale-110"
+                        : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500 hover:scale-110"
+                    }`}
+                    title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : ""}`} />
+                  </button>
+                )}
+                {/* Bookmark Button */}
+                {onSaveToCollection && (
+                  <button
+                    onClick={onSaveToCollection}
+                    className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+                      isInCollection
+                        ? "bg-white text-blue-600 hover:scale-110"
+                        : "bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110"
+                    }`}
+                    title={isInCollection ? "Already in collection" : "Save to collection"}
+                  >
+                    <Bookmark className={`h-5 w-5 transition-transform ${isInCollection ? "fill-current" : ""}`} />
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

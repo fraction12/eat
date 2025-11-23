@@ -108,6 +108,7 @@ export default function RecipesPage() {
   const [showAddRecipeModal, setShowAddRecipeModal] = useState(false)
   const [showRecipePreviewModal, setShowRecipePreviewModal] = useState(false)
   const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(null)
+  const [editingRecipeId, setEditingRecipeId] = useState<string | undefined>(undefined)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -328,19 +329,20 @@ export default function RecipesPage() {
     setShowRecipePreviewModal(true)
   }
 
-  const handleSaveScrapedRecipe = async (recipe: ScrapedRecipe, collectionId?: string) => {
+  const handleSaveScrapedRecipe = async (recipe: ScrapedRecipe, collectionId?: string, recipeId?: string) => {
     try {
+      const isEdit = !!recipeId
       const response = await fetch("/api/recipes/user", {
-        method: "POST",
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipe, collectionId }),
+        body: JSON.stringify(isEdit ? { recipeId, recipe } : { recipe, collectionId }),
       })
 
       if (!response.ok) {
-        throw new Error("Failed to save recipe")
+        throw new Error(isEdit ? "Failed to update recipe" : "Failed to save recipe")
       }
 
-      showToast("success", "Recipe saved successfully!")
+      showToast("success", isEdit ? "Recipe updated successfully!" : "Recipe saved successfully!")
 
       // Refresh data
       await fetchUserRecipes()
@@ -350,10 +352,62 @@ export default function RecipesPage() {
 
       // Reset state
       setScrapedRecipe(null)
+      setEditingRecipeId(undefined)
       setShowRecipePreviewModal(false)
+      setShowRecipeDetail(false)
     } catch (error) {
       console.error("Error saving recipe:", error)
       throw error
+    }
+  }
+
+  const handleEditRecipe = () => {
+    if (!selectedRecipe) return
+
+    // Convert RSSRecipe to ScrapedRecipe format
+    const scrapedFormat: ScrapedRecipe = {
+      title: selectedRecipe.title,
+      description: selectedRecipe.description,
+      image: selectedRecipe.image,
+      ingredients: selectedRecipe.ingredients,
+      instructions: selectedRecipe.instructions,
+      category: selectedRecipe.category,
+      cuisine: selectedRecipe.area,
+      sourceUrl: selectedRecipe.link,
+      sourceName: selectedRecipe.source,
+      tags: selectedRecipe.tags,
+    }
+
+    setScrapedRecipe(scrapedFormat)
+    setEditingRecipeId(selectedRecipe.link) // link is the recipe ID for user recipes
+    setShowRecipePreviewModal(true)
+  }
+
+  const handleDeleteRecipe = async () => {
+    if (!selectedRecipe) return
+
+    if (!confirm("Are you sure you want to delete this recipe? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/recipes/user?id=${selectedRecipe.link}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete recipe")
+      }
+
+      showToast("success", "Recipe deleted successfully!")
+
+      // Refresh data and close modal
+      await fetchUserRecipes()
+      setShowRecipeDetail(false)
+      setSelectedRecipe(null)
+    } catch (error) {
+      console.error("Error deleting recipe:", error)
+      showToast("error", "Failed to delete recipe. Please try again.")
     }
   }
 
@@ -1412,6 +1466,8 @@ export default function RecipesPage() {
             saveToCollection(selectedRecipe)
           }
         }}
+        onEdit={handleEditRecipe}
+        onDelete={handleDeleteRecipe}
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
         isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
         inventory={inventory}
@@ -1428,8 +1484,10 @@ export default function RecipesPage() {
         onClose={() => {
           setShowRecipePreviewModal(false)
           setScrapedRecipe(null)
+          setEditingRecipeId(undefined)
         }}
         recipe={scrapedRecipe}
+        recipeId={editingRecipeId}
         onSave={handleSaveScrapedRecipe}
       />
 
