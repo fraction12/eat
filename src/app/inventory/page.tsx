@@ -440,7 +440,7 @@ export default function InventoryPage() {
                   }`}
                 >
                   <Scan className="inline-block mr-2 h-5 w-5" />
-                  Scan Your Receipt
+                  Scan Receipt
                 </button>
                 <button
                   onClick={() => setActiveTab('manual')}
@@ -451,7 +451,7 @@ export default function InventoryPage() {
                   }`}
                 >
                   <Plus className="inline-block mr-2 h-5 w-5" />
-                  Add Items Manually
+                  Add Manually
                 </button>
               </div>
 
