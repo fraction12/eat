@@ -679,7 +679,27 @@ export default function RecipesPage() {
         </div>
 
         {/* Cook Now - Hero Section */}
-        {!isLoading && cookNowRecipes.length > 0 && (
+        {(isLoading || isLoadingBuiltIn) ? (
+          <div className="mb-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl p-6 sm:p-8 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <ChefHat className="h-8 w-8" />
+              <div className="w-full">
+                <div className="h-8 w-64 bg-white/20 rounded-lg animate-pulse mb-2"></div>
+                <div className="h-4 w-48 bg-white/20 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 h-[280px]">
+                  <div className="h-32 bg-white/20 rounded-lg animate-pulse mb-3"></div>
+                  <div className="h-4 w-3/4 bg-white/20 rounded animate-pulse mb-2"></div>
+                  <div className="h-4 w-1/2 bg-white/20 rounded animate-pulse mb-3"></div>
+                  <div className="h-10 w-full bg-white/20 rounded-lg animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : cookNowRecipes.length > 0 ? (
           <div className="mb-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl p-6 sm:p-8 text-white">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -722,7 +742,7 @@ export default function RecipesPage() {
                   <div
                     key={idx}
                     onClick={() => openRecipeDetail(recipe)}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group cursor-pointer"
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group cursor-pointer h-[280px] flex flex-col"
                   >
                     <div className="relative mb-3">
                       <img
@@ -769,18 +789,20 @@ export default function RecipesPage() {
                         <Bookmark className={`h-4 w-4 transition-transform ${inCollection ? "fill-current" : ""}`} />
                       </button>
                     </div>
-                    <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm">
+                    <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm min-h-[2.5rem]">
                       {recipe.title}
                     </h3>
-                    <a
-                      href={recipe.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-white text-green-600 rounded-lg hover:bg-white/90 transition-colors text-sm font-semibold"
-                    >
-                      <ChefHat className="h-4 w-4" />
-                      Cook This Now
-                    </a>
+                    <div className="mt-auto">
+                      <a
+                        href={recipe.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-white text-green-600 rounded-lg hover:bg-white/90 transition-colors text-sm font-semibold h-10"
+                      >
+                        <ChefHat className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">Cook This Now</span>
+                      </a>
+                    </div>
                   </div>
                 )
               })}
@@ -797,7 +819,7 @@ export default function RecipesPage() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Search and Filters Section */}
         <div className="mb-8 bg-white rounded-2xl shadow-lg p-6">
@@ -981,10 +1003,48 @@ export default function RecipesPage() {
         </div>
 
         {/* Unified Recipe Table */}
-        {isLoading ? (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading recipes from all sources...</p>
+        {isLoading || isLoadingBuiltIn ? (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[45%]">Recipe</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[20%]">Source</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[15%]">Category</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                    <tr key={i} className="bg-white h-[76px]">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+                          <div className="flex-1">
+                            <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                            <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                          <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                          <div className="w-20 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : paginatedRecipes.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -1003,16 +1063,16 @@ export default function RecipesPage() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[45%]">
                       Recipe
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[20%]">
                       Source
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[15%]">
                       Match
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">
                       Actions
                     </th>
                   </tr>
@@ -1026,7 +1086,7 @@ export default function RecipesPage() {
                       <tr
                         key={idx}
                         onClick={() => openRecipeDetail(recipe)}
-                        className={`transition-all duration-150 cursor-pointer ${
+                        className={`transition-all duration-150 cursor-pointer h-[76px] ${
                           idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                         } ${
                           canMake ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-transparent'
@@ -1060,11 +1120,11 @@ export default function RecipesPage() {
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 {recipe.category && (
-                                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">
+                                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-md font-medium truncate max-w-[100px]">
                                     {recipe.category}
                                   </span>
                                 )}
-                                <span className="text-xs text-gray-500 md:hidden">
+                                <span className="text-xs text-gray-500 md:hidden truncate">
                                   {recipe.source || "Unknown"}
                                 </span>
                               </div>
@@ -1074,11 +1134,11 @@ export default function RecipesPage() {
 
                         {/* Source */}
                         <td className="px-4 py-3 hidden md:table-cell">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 truncate">
                             {recipe.source || "Unknown"}
                           </div>
                           {recipe.area && (
-                            <div className="text-xs text-gray-500 mt-0.5">{recipe.area}</div>
+                            <div className="text-xs text-gray-500 mt-0.5 truncate">{recipe.area}</div>
                           )}
                         </td>
 
@@ -1105,7 +1165,7 @@ export default function RecipesPage() {
                                 e.stopPropagation()
                                 toggleFavorite(recipe)
                               }}
-                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 w-8 h-8 ${
                                 isFavorite(recipe.link)
                                   ? "text-red-500 bg-red-50 hover:bg-red-100 hover:scale-110"
                                   : "text-gray-400 hover:text-red-500 hover:bg-red-50 hover:scale-110"
@@ -1122,7 +1182,7 @@ export default function RecipesPage() {
                                 e.stopPropagation()
                                 saveToCollection(recipe)
                               }}
-                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 ${
+                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 w-8 h-8 ${
                                 isInCollection(recipe.link)
                                   ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:scale-110"
                                   : "text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:scale-110"
@@ -1135,10 +1195,10 @@ export default function RecipesPage() {
                               href={recipe.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 hover:shadow-md transition-all text-xs font-semibold"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 hover:shadow-md transition-all text-xs font-semibold h-8"
                             >
-                              <ChefHat className="h-3.5 w-3.5" />
-                              <span className="hidden sm:inline">Cook</span>
+                              <ChefHat className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="hidden sm:inline truncate">Cook</span>
                             </a>
                           </div>
                         </td>
