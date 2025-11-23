@@ -67,7 +67,7 @@ export function RecipeDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with Image */}
-        <div className="relative h-64 bg-gray-200">
+        <div className="relative h-40 bg-gray-200">
           <img
             src={recipe.image}
             alt={recipe.title}
