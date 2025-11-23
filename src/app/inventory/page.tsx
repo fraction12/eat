@@ -602,7 +602,7 @@ export default function InventoryPage() {
                       </>
                     )}
                   </div>
-                ) : (
+                ) : activeTab === 'manual' ? (
                   <div className="space-y-5">
                     <div>
                       <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-2">
