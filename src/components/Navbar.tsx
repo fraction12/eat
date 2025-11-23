@@ -71,7 +71,7 @@ export function Navbar() {
               className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             >
               <MessageSquare className="h-5 w-5" />
-              <span className="hidden lg:inline">Feedback</span>
+              <span className="hidden lg:inline">Report Issue</span>
             </button>
             <button
               onClick={handleSignOut}
@@ -131,7 +131,7 @@ export function Navbar() {
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             >
               <MessageSquare className="h-5 w-5" />
-              Feedback
+              Report Issue
             </button>
             <button
               onClick={handleSignOut}

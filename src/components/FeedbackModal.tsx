@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, X, MessageSquare, Star } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 import { showToast } from "@/components/Toast"
 
 type FeedbackModalProps = {
@@ -12,16 +12,14 @@ type FeedbackModalProps = {
 
 export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [message, setMessage] = useState("")
-  const [rating, setRating] = useState<number | null>(null)
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null)
-  const [feedbackType, setFeedbackType] = useState("general")
+  const [feedbackType, setFeedbackType] = useState("broken")
   const [isSending, setIsSending] = useState(false)
 
   if (!isOpen) return null
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      showToast("error", "Please enter your feedback")
+      showToast("error", "Please tell me what's wrong")
       return
     }
 
@@ -33,7 +31,6 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: message.trim(),
-          rating,
           feedbackType,
         }),
       })
@@ -44,11 +41,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
       // Clear form
       setMessage("")
-      setRating(null)
-      setFeedbackType("general")
+      setFeedbackType("broken")
 
       onClose()
-      showToast("success", "Thank you! Your feedback has been sent.")
+      showToast("success", "Got it! I'll look into this ASAP 👍")
     } catch (error) {
       console.error("Error sending feedback:", error)
       showToast("error", "Failed to send feedback. Please try again.")
@@ -60,8 +56,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const handleClose = () => {
     if (!isSending) {
       setMessage("")
-      setRating(null)
-      setFeedbackType("general")
+      setFeedbackType("broken")
       onClose()
     }
   }
@@ -70,12 +65,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-orange-100 p-2 rounded-lg">
-              <MessageSquare className="h-6 w-6 text-orange-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Send Feedback</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">What's wrong?</h2>
+            <p className="text-sm text-gray-500 mt-1">Found a bug? Something confusing? Let me know!</p>
           </div>
           <button
             onClick={handleClose}
@@ -91,7 +84,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           {/* Feedback Type */}
           <div>
             <label htmlFor="feedback-type" className="block text-sm font-medium text-gray-700 mb-2">
-              What kind of feedback?
+              What's the issue?
             </label>
             <select
               id="feedback-type"
@@ -100,50 +93,23 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               disabled={isSending}
               className="w-full h-10 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="general">General Feedback</option>
-              <option value="bug">Bug Report</option>
-              <option value="feature">Feature Request</option>
-              <option value="improvement">Improvement Suggestion</option>
-              <option value="other">Other</option>
+              <option value="broken">Something's broken</option>
+              <option value="confusing">Something's confusing</option>
+              <option value="missing">Missing a feature</option>
+              <option value="slow">Something's slow</option>
+              <option value="idea">I have an idea</option>
+              <option value="other">Something else</option>
             </select>
-          </div>
-
-          {/* Rating (Optional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              How would you rate your experience? (optional)
-            </label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoveredRating(star)}
-                  onMouseLeave={() => setHoveredRating(null)}
-                  disabled={isSending}
-                  className="transition-transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Star
-                    className={`h-8 w-8 ${
-                      star <= (hoveredRating || rating || 0)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Message */}
           <div>
             <label htmlFor="feedback-message" className="block text-sm font-medium text-gray-700 mb-2">
-              Your feedback *
+              Tell me more *
             </label>
             <textarea
               id="feedback-message"
-              placeholder="Tell us what's on your mind..."
+              placeholder="What happened? What were you trying to do? Be as specific as possible..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               disabled={isSending}
@@ -151,7 +117,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white resize-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <p className="text-xs text-gray-500 mt-1">
-              We read every piece of feedback and appreciate your input!
+              I read everything personally. Your email is included automatically so I can follow up if needed.
             </p>
           </div>
         </div>
@@ -164,7 +130,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             disabled={isSending}
             className="flex-1"
           >
-            Cancel
+            Nevermind
           </Button>
           <Button
             onClick={handleSubmit}
@@ -177,7 +143,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                 Sending...
               </>
             ) : (
-              "Send Feedback"
+              "Send to Dushyant"
             )}
           </Button>
         </div>

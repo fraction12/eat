@@ -48,38 +48,49 @@ export async function POST(request: Request) {
     const userId = user?.id || 'Not logged in';
     const timestamp = new Date().toISOString();
 
+    // Get friendly type labels
+    const typeLabels: Record<string, string> = {
+      broken: "Something's broken 🐛",
+      confusing: "Something's confusing 🤔",
+      missing: "Missing a feature 💡",
+      slow: "Something's slow 🐌",
+      idea: "User has an idea 💭",
+      other: "Something else"
+    };
+    const typeLabel = typeLabels[feedbackType] || feedbackType;
+
     const emailHtml = `
-      <h2>New Feedback Received</h2>
-      <p><strong>Type:</strong> ${feedbackType || 'General'}</p>
-      ${rating ? `<p><strong>Rating:</strong> ${'⭐'.repeat(rating)} (${rating}/5)</p>` : ''}
-      <p><strong>Message:</strong></p>
-      <p>${message.replace(/\n/g, '<br>')}</p>
-      <hr>
-      <p><strong>User Email:</strong> ${userEmail}</p>
-      <p><strong>User ID:</strong> ${userId}</p>
-      <p><strong>Submitted:</strong> ${timestamp}</p>
+      <h2>Issue Report from Eat App</h2>
+      <p><strong>Issue Type:</strong> ${typeLabel}</p>
+      <p><strong>What they said:</strong></p>
+      <p style="background: #f9fafb; padding: 12px; border-radius: 8px; margin: 12px 0;">${message.replace(/\n/g, '<br>')}</p>
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #6b7280;">
+        <strong>User:</strong> ${userEmail}<br>
+        <strong>User ID:</strong> ${userId}<br>
+        <strong>When:</strong> ${timestamp}
+      </p>
     `;
 
     const emailText = `
-New Feedback Received
+Issue Report from Eat App
 
-Type: ${feedbackType || 'General'}
-${rating ? `Rating: ${'★'.repeat(rating)} (${rating}/5)` : ''}
+Issue Type: ${typeLabel}
 
-Message:
+What they said:
 ${message}
 
 ---
-User Email: ${userEmail}
+User: ${userEmail}
 User ID: ${userId}
-Submitted: ${timestamp}
+When: ${timestamp}
     `;
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: 'Eat App Feedback <onboarding@resend.dev>', // You'll change this to your domain later
+      from: 'Eat App <onboarding@resend.dev>', // You'll change this to your domain later
       to: [recipientEmail],
-      subject: `New Feedback: ${feedbackType || 'General'} ${rating ? `(${rating}⭐)` : ''}`,
+      subject: `[Eat] ${typeLabel}`,
       html: emailHtml,
       text: emailText,
       reply_to: user?.email || undefined,
