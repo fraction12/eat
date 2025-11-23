@@ -133,7 +133,7 @@ export function AddRecipeModal({ isOpen, onClose, onRecipeScraped }: AddRecipeMo
           <div className="flex gap-3">
             <Button
               type="submit"
-              className="flex-1"
+              className="flex-1 bg-orange-500 hover:bg-orange-600"
               disabled={isLoading || !url.trim()}
             >
               {isLoading ? (

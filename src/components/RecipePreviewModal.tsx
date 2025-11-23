@@ -316,7 +316,7 @@ export function RecipePreviewModal({
               <div className="flex gap-3">
                 <Button
                   onClick={handleSave}
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 bg-orange-500 hover:bg-orange-600"
                   disabled={isSaving}
                 >
                   {isSaving ? (
@@ -344,7 +344,7 @@ export function RecipePreviewModal({
             <div className="flex gap-3">
               <Button
                 onClick={() => setShowCollectionSelect(true)}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 bg-orange-500 hover:bg-orange-600"
               >
                 <Save className="h-4 w-4" />
                 Save Recipe
