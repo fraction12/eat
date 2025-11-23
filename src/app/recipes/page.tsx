@@ -66,6 +66,7 @@ export default function RecipesPage() {
   const [isLoadingBuiltIn, setIsLoadingBuiltIn] = useState(true)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [collectionRecipeUrls, setCollectionRecipeUrls] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const recipesPerPage = 10
@@ -89,6 +90,7 @@ export default function RecipesPage() {
       fetchFeeds()
       fetchInventory()
       fetchFavorites()
+      fetchCollectionRecipes()
     }
   }, [user])
 
@@ -134,8 +136,42 @@ export default function RecipesPage() {
     }
   }
 
+  const fetchCollectionRecipes = async () => {
+    try {
+      // Fetch all collections first
+      const collectionsRes = await fetch("/api/collections")
+      if (!collectionsRes.ok) return
+
+      const collectionsData = await collectionsRes.json()
+      const collections = collectionsData.collections || []
+
+      // Fetch recipes for all collections
+      const recipeUrls = new Set<string>()
+      await Promise.all(
+        collections.map(async (collection: any) => {
+          const recipesRes = await fetch(`/api/collections/recipes?collection_id=${collection.id}`)
+          if (recipesRes.ok) {
+            const recipesData = await recipesRes.json()
+            const recipes = recipesData.recipes || []
+            recipes.forEach((recipe: any) => {
+              recipeUrls.add(recipe.recipe_url)
+            })
+          }
+        })
+      )
+
+      setCollectionRecipeUrls(recipeUrls)
+    } catch (error) {
+      console.error("Failed to fetch collection recipes:", error)
+    }
+  }
+
   const isFavorite = (recipeLink: string): boolean => {
     return favorites.some((fav) => fav.recipe_link === recipeLink)
+  }
+
+  const isInCollection = (recipeLink: string): boolean => {
+    return collectionRecipeUrls.has(recipeLink)
   }
 
   const saveToCollection = (recipe: RSSRecipe) => {
@@ -166,6 +202,8 @@ export default function RecipesPage() {
 
       if (response.ok) {
         showToast("success", `Saved to ${collection.name}`)
+        // Refresh collection recipes to update bookmark states
+        await fetchCollectionRecipes()
       } else {
         const data = await response.json()
         showToast("error", data.error || "Failed to save recipe")
@@ -655,6 +693,7 @@ export default function RecipesPage() {
               {cookNowRecipes.slice(0, 4).map((item, idx) => {
                 const { recipe, matchCount } = item
                 const favorited = isFavorite(recipe.link)
+                const inCollection = isInCollection(recipe.link)
 
                 return (
                   <div
@@ -676,26 +715,35 @@ export default function RecipesPage() {
                         <Check className="h-3 w-3" />
                         {matchCount} match{matchCount > 1 ? 'es' : ''}
                       </div>
+                      {/* Favorite Button */}
                       <button
                         onClick={(e) => {
-                          e.preventDefault()
+                          e.stopPropagation()
                           toggleFavorite(recipe)
                         }}
-                        className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
-                          favorited ? "bg-white text-red-500" : "bg-black/30 text-white hover:bg-white hover:text-red-500"
+                        className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                          favorited
+                            ? "bg-white/95 text-red-500 hover:bg-white hover:scale-110"
+                            : "bg-black/30 text-white hover:bg-white/90 hover:text-red-500 hover:scale-110"
                         }`}
+                        title={favorited ? "Remove from favorites" : "Add to favorites"}
                       >
-                        <Heart className={`h-4 w-4 ${favorited ? "fill-current" : ""}`} />
+                        <Heart className={`h-4 w-4 transition-transform ${favorited ? "fill-current" : ""}`} />
                       </button>
+                      {/* Bookmark Button */}
                       <button
                         onClick={(e) => {
-                          e.preventDefault()
+                          e.stopPropagation()
                           saveToCollection(recipe)
                         }}
-                        className="absolute top-2 right-10 p-1.5 rounded-full backdrop-blur-sm bg-black/30 text-white hover:bg-white hover:text-blue-600 transition-all"
-                        title="Save to collection"
+                        className={`absolute top-2 right-10 p-1.5 rounded-full backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 ${
+                          inCollection
+                            ? "bg-white/95 text-blue-600 hover:bg-white hover:scale-110"
+                            : "bg-black/30 text-white hover:bg-white/90 hover:text-blue-600 hover:scale-110"
+                        }`}
+                        title={inCollection ? "Already in collection" : "Save to collection"}
                       >
-                        <Bookmark className="h-4 w-4" />
+                        <Bookmark className={`h-4 w-4 transition-transform ${inCollection ? "fill-current" : ""}`} />
                       </button>
                     </div>
                     <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm">
@@ -729,6 +777,7 @@ export default function RecipesPage() {
                 const matchCount = canMakeRecipe(recipe)
                 const canMake = matchCount > 0
                 const favorited = isFavorite(recipe.link)
+                const inCollection = isInCollection(recipe.link)
 
                 return (
                   <div
@@ -753,28 +802,33 @@ export default function RecipesPage() {
                       {/* Favorite Button */}
                       <button
                         onClick={(e) => {
-                          e.preventDefault()
+                          e.stopPropagation()
                           toggleFavorite(recipe)
                         }}
-                        className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all ${
+                        className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
                           favorited
-                            ? "bg-white/90 text-red-500"
-                            : "bg-black/30 text-white hover:bg-white/90 hover:text-red-500"
+                            ? "bg-white/95 text-red-500 hover:bg-white hover:scale-110"
+                            : "bg-black/30 text-white hover:bg-white/90 hover:text-red-500 hover:scale-110"
                         }`}
+                        title={favorited ? "Remove from favorites" : "Add to favorites"}
                       >
-                        <Heart className={`h-5 w-5 ${favorited ? "fill-current" : ""}`} />
+                        <Heart className={`h-5 w-5 transition-transform ${favorited ? "fill-current" : ""}`} />
                       </button>
 
                       {/* Save to Collection Button */}
                       <button
                         onClick={(e) => {
-                          e.preventDefault()
+                          e.stopPropagation()
                           saveToCollection(recipe)
                         }}
-                        className="absolute top-3 right-14 p-2 rounded-full backdrop-blur-sm bg-black/30 text-white hover:bg-white/90 hover:text-blue-600 transition-all"
-                        title="Save to collection"
+                        className={`absolute top-3 right-14 p-2 rounded-full backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 ${
+                          inCollection
+                            ? "bg-white/95 text-blue-600 hover:bg-white hover:scale-110"
+                            : "bg-black/30 text-white hover:bg-white/90 hover:text-blue-600 hover:scale-110"
+                        }`}
+                        title={inCollection ? "Already in collection" : "Save to collection"}
                       >
-                        <Bookmark className="h-5 w-5" />
+                        <Bookmark className={`h-5 w-5 transition-transform ${inCollection ? "fill-current" : ""}`} />
                       </button>
 
                       {/* Match Badge */}
@@ -1125,31 +1179,37 @@ export default function RecipesPage() {
                         {/* Actions */}
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Favorite Button */}
                             <button
                               onClick={(e) => {
-                                e.preventDefault()
+                                e.stopPropagation()
                                 toggleFavorite(recipe)
                               }}
-                              className={`p-2 rounded-lg transition-all ${
+                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
                                 isFavorite(recipe.link)
-                                  ? "text-red-500 bg-red-50 hover:bg-red-100"
-                                  : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                  ? "text-red-500 bg-red-50 hover:bg-red-100 hover:scale-110"
+                                  : "text-gray-400 hover:text-red-500 hover:bg-red-50 hover:scale-110"
                               }`}
                               title={isFavorite(recipe.link) ? "Remove from favorites" : "Add to favorites"}
                             >
                               <Heart
-                                className={`h-4 w-4 ${isFavorite(recipe.link) ? "fill-current" : ""}`}
+                                className={`h-4 w-4 transition-transform ${isFavorite(recipe.link) ? "fill-current" : ""}`}
                               />
                             </button>
+                            {/* Bookmark Button */}
                             <button
                               onClick={(e) => {
-                                e.preventDefault()
+                                e.stopPropagation()
                                 saveToCollection(recipe)
                               }}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
-                              title="Save to collection"
+                              className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 ${
+                                isInCollection(recipe.link)
+                                  ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:scale-110"
+                                  : "text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:scale-110"
+                              }`}
+                              title={isInCollection(recipe.link) ? "Already in collection" : "Save to collection"}
                             >
-                              <Bookmark className="h-4 w-4" />
+                              <Bookmark className={`h-4 w-4 transition-transform ${isInCollection(recipe.link) ? "fill-current" : ""}`} />
                             </button>
                             <a
                               href={recipe.link}
@@ -1277,6 +1337,7 @@ export default function RecipesPage() {
           }
         }}
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
+        isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
       />
 
       <ToastContainer />

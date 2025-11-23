@@ -23,6 +23,7 @@ type RecipeDetailModalProps = {
   onFavorite?: () => void
   onSaveToCollection?: () => void
   isFavorited?: boolean
+  isInCollection?: boolean
 }
 
 export function RecipeDetailModal({
@@ -31,7 +32,8 @@ export function RecipeDetailModal({
   recipe,
   onFavorite,
   onSaveToCollection,
-  isFavorited = false
+  isFavorited = false,
+  isInCollection = false
 }: RecipeDetailModalProps) {
   if (!isOpen || !recipe) return null
 
@@ -63,26 +65,32 @@ export function RecipeDetailModal({
 
           {/* Action Buttons */}
           <div className="absolute bottom-4 right-4 flex gap-2">
+            {/* Favorite Button */}
             {onFavorite && (
               <button
                 onClick={onFavorite}
-                className={`p-3 rounded-full shadow-lg transition-all ${
+                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 ${
                   isFavorited
-                    ? "bg-white text-red-500"
-                    : "bg-white/90 hover:bg-white text-gray-700"
+                    ? "bg-white text-red-500 hover:scale-110"
+                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500 hover:scale-110"
                 }`}
-                title="Favorite"
+                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
               >
-                <Heart className={`h-5 w-5 ${isFavorited ? "fill-current" : ""}`} />
+                <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : ""}`} />
               </button>
             )}
+            {/* Bookmark Button */}
             {onSaveToCollection && (
               <button
                 onClick={onSaveToCollection}
-                className="p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-colors"
-                title="Save to collection"
+                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+                  isInCollection
+                    ? "bg-white text-blue-600 hover:scale-110"
+                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110"
+                }`}
+                title={isInCollection ? "Already in collection" : "Save to collection"}
               >
-                <Bookmark className="h-5 w-5" />
+                <Bookmark className={`h-5 w-5 transition-transform ${isInCollection ? "fill-current" : ""}`} />
               </button>
             )}
           </div>
