@@ -529,7 +529,7 @@ export default function InventoryPage() {
                 ) : (
                   <div className="space-y-5">
                     <div>
-                      <label htmlFor="item-name" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-2">
                         Item Name *
                       </label>
                       <Input
@@ -540,12 +540,12 @@ export default function InventoryPage() {
                         onChange={(e) => setManualItem(e.target.value)}
                         disabled={isAdding}
                         onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                        className="h-11 text-base"
+                        className="h-10 text-sm"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="item-category" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-2">
                         Category *
                       </label>
                       <select
@@ -553,7 +553,7 @@ export default function InventoryPage() {
                         value={manualCategory}
                         onChange={(e) => setManualCategory(e.target.value as Category)}
                         disabled={isAdding}
-                        className="w-full h-11 px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                       >
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
@@ -567,7 +567,7 @@ export default function InventoryPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="item-quantity" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="item-quantity" className="block text-sm font-medium text-gray-700 mb-2">
                           Quantity *
                         </label>
                         <Input
@@ -580,11 +580,11 @@ export default function InventoryPage() {
                           onChange={(e) => setManualQuantity(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="h-11 text-base"
+                          className="h-10 text-sm"
                         />
                       </div>
                       <div>
-                        <label htmlFor="item-unit" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="item-unit" className="block text-sm font-medium text-gray-700 mb-2">
                           Unit *
                         </label>
                         <select
@@ -592,7 +592,7 @@ export default function InventoryPage() {
                           value={manualUnit}
                           onChange={(e) => setManualUnit(e.target.value)}
                           disabled={isAdding}
-                          className="w-full h-11 px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                         >
                           {unitOptions.map(unit => (
                             <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -602,7 +602,7 @@ export default function InventoryPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="item-price" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
                         Price (optional)
                       </label>
                       <div className="relative">
@@ -616,7 +616,7 @@ export default function InventoryPage() {
                           onChange={(e) => setManualPrice(e.target.value)}
                           disabled={isAdding}
                           onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="h-11 pl-8 text-base"
+                          className="h-10 pl-8 text-sm"
                         />
                       </div>
                     </div>
@@ -657,14 +657,14 @@ export default function InventoryPage() {
                     placeholder="Search items..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="h-10 pl-10 text-sm"
                   />
                 </div>
                 <div className="flex gap-2">
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value as Category | 'all')}
-                    className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="h-10 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                   >
                     <option value="all">All Categories</option>
                     <option value="produce">🥬 Produce</option>
@@ -752,7 +752,7 @@ export default function InventoryPage() {
                               className="p-5 hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-transparent transition-all duration-200"
                             >
                               {/* Grid Layout: Info Left | Controls Right */}
-                              <div className="grid grid-cols-[1fr,auto] gap-6 items-center">
+                              <div className="grid grid-cols-[1fr,auto] gap-4 items-center">
 
                                 {/* LEFT: Item Information */}
                                 <div className="space-y-2">
@@ -775,9 +775,9 @@ export default function InventoryPage() {
                                   </div>
 
                                   {/* Metadata Row */}
-                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-3 text-sm text-gray-600">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-medium text-gray-900">
+                                      <span className="font-normal text-gray-900">
                                         {currentQty} {item.unit || 'count'}
                                       </span>
                                     </div>
@@ -872,8 +872,8 @@ export default function InventoryPage() {
                                           }
                                         }}
                                         disabled={updatingPrices.has(item.id)}
-                                        className={`w-20 h-6 px-1 text-sm font-semibold text-center border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                          updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white hover:bg-gray-50'
+                                        className={`w-24 h-8 px-2 text-sm font-normal text-center border border-gray-300 hover:border-gray-400 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                          updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
                                         }`}
                                         title="Edit total price"
                                       />
@@ -881,7 +881,7 @@ export default function InventoryPage() {
                                     </div>
                                     <div className="text-gray-400">•</div>
                                     <div className="inline-flex items-center gap-1.5">
-                                      <Clock className="h-3.5 w-3.5 text-gray-400" />
+                                      <Clock className="h-4 w-4 text-gray-400" />
                                       <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
                                     </div>
                                   </div>
@@ -893,7 +893,7 @@ export default function InventoryPage() {
                                   <select
                                     value={categorizeItem(item)}
                                     onChange={(e) => handleCategoryChange(item.id, e.target.value as Category)}
-                                    className="h-9 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    className="h-8 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
                                     title="Change category"
                                   >
                                     <option value="produce">🥬 Produce</option>
@@ -909,7 +909,7 @@ export default function InventoryPage() {
                                   <select
                                     value={item.unit || 'count'}
                                     onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                    className="h-9 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                    className="h-8 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
                                     title="Change unit"
                                   >
                                     {unitOptions.map(opt => (
@@ -1004,7 +1004,7 @@ export default function InventoryPage() {
                                         }
                                       }}
                                       disabled={updatingQuantities.has(item.id)}
-                                      className={`w-24 h-9 text-sm text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                      className={`w-20 h-8 px-2 text-sm text-center border border-gray-300 hover:border-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
                                         updatingQuantities.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
                                       }`}
                                       title="Edit quantity"
@@ -1016,7 +1016,7 @@ export default function InventoryPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDelete(item.id)}
-                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Delete item"
                                   >
                                     <Trash2 className="h-4 w-4" />
