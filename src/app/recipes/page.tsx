@@ -150,7 +150,7 @@ export default function RecipesPage() {
         // Convert user recipes to RSSRecipe format
         const formattedRecipes = (data.recipes || []).map((recipe: any) => ({
           title: recipe.title,
-          link: recipe.source_url || recipe.id,
+          link: recipe.id,  // Always use database UUID for user recipes
           description: recipe.description || "",
           image: recipe.image_url || "",
           pubDate: recipe.created_at,
