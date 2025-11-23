@@ -1009,9 +1009,9 @@ export default function RecipesPage() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">Recipe</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[15%]">Source</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[10%]">Items</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[65%]">Recipe</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[10%]">Source</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[5%]">Items</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">Actions</th>
                   </tr>
                 </thead>
@@ -1063,13 +1063,13 @@ export default function RecipesPage() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[65%]">
                       Recipe
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[15%]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[10%]">
                       Source
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[10%]">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[5%]">
                       Items
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">
