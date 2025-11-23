@@ -25,18 +25,41 @@ type CollectionRecipe = {
   added_at: string
 }
 
+type InventoryItem = {
+  id: string
+  item: string
+  price: number
+  quantity: number
+  created_at: string
+}
+
+type FullRecipe = {
+  title: string
+  link: string
+  description: string
+  image: string
+  source?: string
+  category?: string
+  area?: string
+  ingredients?: string[]
+  instructions?: string
+  tags?: string[]
+}
+
 type CollectionsModalProps = {
   isOpen: boolean
   onClose: () => void
   onCollectionSelect?: (collection: Collection) => void
   mode?: "select" | "manage" // select for adding recipe, manage for viewing all
+  inventory?: InventoryItem[]
 }
 
 export function CollectionsModal({
   isOpen,
   onClose,
   onCollectionSelect,
-  mode = "manage"
+  mode = "manage",
+  inventory = []
 }: CollectionsModalProps) {
   const [collections, setCollections] = useState<Collection[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -46,6 +69,7 @@ export function CollectionsModal({
   // Viewing collection recipes
   const [viewingCollection, setViewingCollection] = useState<Collection | null>(null)
   const [collectionRecipes, setCollectionRecipes] = useState<CollectionRecipe[]>([])
+  const [fullRecipeDetails, setFullRecipeDetails] = useState<Map<string, FullRecipe>>(new Map())
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false)
   const [recipeSearchQuery, setRecipeSearchQuery] = useState("")
   const [carouselIndex, setCarouselIndex] = useState(0)
@@ -150,7 +174,11 @@ export function CollectionsModal({
       const response = await fetch(`/api/collections/recipes?collection_id=${collection.id}`)
       if (response.ok) {
         const data = await response.json()
-        setCollectionRecipes(data.recipes || [])
+        const recipes = data.recipes || []
+        setCollectionRecipes(recipes)
+
+        // Fetch full details for all recipes
+        await fetchFullRecipeDetails(recipes)
       } else {
         showToast("error", "Failed to load recipes")
       }
@@ -159,6 +187,42 @@ export function CollectionsModal({
       showToast("error", "Failed to load recipes")
     } finally {
       setIsLoadingRecipes(false)
+    }
+  }
+
+  const fetchFullRecipeDetails = async (recipes: CollectionRecipe[]) => {
+    try {
+      // Fetch all built-in recipes
+      const response = await fetch("/api/recipes/built-in")
+      if (response.ok) {
+        const data = await response.json()
+        const builtInRecipes = data.recipes || []
+
+        // Create a map of recipe details by URL
+        const detailsMap = new Map<string, FullRecipe>()
+
+        recipes.forEach((collectionRecipe) => {
+          // Try to find matching built-in recipe by URL
+          const matchingRecipe = builtInRecipes.find((r: any) => r.link === collectionRecipe.recipe_url)
+
+          if (matchingRecipe) {
+            detailsMap.set(collectionRecipe.recipe_url, matchingRecipe)
+          } else {
+            // If no match found, create a basic recipe object
+            detailsMap.set(collectionRecipe.recipe_url, {
+              title: collectionRecipe.recipe_title,
+              link: collectionRecipe.recipe_url,
+              description: "",
+              image: collectionRecipe.recipe_image || "",
+              source: collectionRecipe.recipe_source || undefined,
+            })
+          }
+        })
+
+        setFullRecipeDetails(detailsMap)
+      }
+    } catch (error) {
+      console.error("Failed to fetch full recipe details:", error)
     }
   }
 
@@ -290,6 +354,20 @@ export function CollectionsModal({
                   }
 
                   const currentRecipe = filteredRecipes[carouselIndex]
+                  const fullRecipe = fullRecipeDetails.get(currentRecipe.recipe_url)
+
+                  // Helper function to check if user has an ingredient
+                  const hasIngredient = (ingredient: string): boolean => {
+                    const ingredientLower = ingredient.toLowerCase()
+                    return inventory.some(item =>
+                      ingredientLower.includes(item.item.toLowerCase()) ||
+                      item.item.toLowerCase().includes(ingredientLower.split(' ')[0])
+                    )
+                  }
+
+                  const matchedIngredients = fullRecipe?.ingredients?.filter(ing => hasIngredient(ing)) || []
+                  const matchCount = matchedIngredients.length
+                  const totalIngredients = fullRecipe?.ingredients?.length || 0
 
                   return (
                     <div className="space-y-4">
@@ -311,9 +389,9 @@ export function CollectionsModal({
                         )}
 
                         {/* Recipe Detail Card */}
-                        <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+                        <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-2xl max-h-[70vh] overflow-y-auto">
                           {/* Recipe Image */}
-                          <div className="relative h-80 bg-gray-200">
+                          <div className="relative h-64 bg-gray-200">
                             <img
                               src={currentRecipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"}
                               alt={currentRecipe.recipe_title}
@@ -334,22 +412,104 @@ export function CollectionsModal({
                           <div className="p-6">
                             {/* Title and Source */}
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                              {currentRecipe.recipe_title}
+                              {fullRecipe?.title || currentRecipe.recipe_title}
                             </h2>
-                            {currentRecipe.recipe_source && (
-                              <p className="text-sm text-gray-600 mb-6">From {currentRecipe.recipe_source}</p>
+                            {fullRecipe?.source && (
+                              <p className="text-sm text-gray-600 mb-4">From {fullRecipe.source}</p>
+                            )}
+
+                            {/* Metadata */}
+                            <div className="flex flex-wrap gap-2 mb-6">
+                              {fullRecipe?.category && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                  {fullRecipe.category}
+                                </span>
+                              )}
+                              {fullRecipe?.area && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                  {fullRecipe.area}
+                                </span>
+                              )}
+                              {fullRecipe?.tags && fullRecipe.tags.slice(0, 3).map((tag, idx) => (
+                                <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Description */}
+                            {fullRecipe?.description && (
+                              <div className="mb-6">
+                                <p className="text-gray-700 leading-relaxed">{fullRecipe.description}</p>
+                              </div>
+                            )}
+
+                            {/* Ingredients */}
+                            {fullRecipe?.ingredients && fullRecipe.ingredients.length > 0 && (
+                              <div className="mb-6">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="text-xl font-bold text-gray-900">Ingredients</h3>
+                                  {matchCount > 0 && (
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
+                                      <Check className="h-4 w-4 text-green-600" />
+                                      <span className="text-sm font-semibold text-green-700">
+                                        You have {matchCount} of {totalIngredients}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <ul className="space-y-2">
+                                  {fullRecipe.ingredients.map((ingredient, idx) => {
+                                    const userHasIt = hasIngredient(ingredient)
+                                    return (
+                                      <li
+                                        key={idx}
+                                        className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
+                                          userHasIt ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                                        }`}
+                                      >
+                                        {userHasIt ? (
+                                          <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                        ) : (
+                                          <span className="text-gray-400 mt-0.5 ml-0.5 flex-shrink-0">○</span>
+                                        )}
+                                        <span className={`${userHasIt ? 'text-green-900 font-medium' : 'text-gray-700'}`}>
+                                          {ingredient}
+                                        </span>
+                                      </li>
+                                    )
+                                  })}
+                                </ul>
+                                {matchCount > 0 && matchCount < totalIngredients && (
+                                  <p className="text-sm text-gray-600 mt-3 italic">
+                                    You need {totalIngredients - matchCount} more ingredient{totalIngredients - matchCount !== 1 ? 's' : ''} to make this recipe
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Instructions */}
+                            {fullRecipe?.instructions && (
+                              <div className="mb-6">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3">Instructions</h3>
+                                <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                                  {fullRecipe.instructions}
+                                </div>
+                              </div>
                             )}
 
                             {/* Cook Button */}
-                            <a
-                              href={currentRecipe.recipe_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
-                            >
-                              <ChefHat className="h-5 w-5" />
-                              View Full Recipe
-                            </a>
+                            <div className="mt-8 pt-6 border-t border-gray-200">
+                              <a
+                                href={currentRecipe.recipe_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
+                              >
+                                <ChefHat className="h-5 w-5" />
+                                View Full Recipe
+                              </a>
+                            </div>
                           </div>
                         </div>
 

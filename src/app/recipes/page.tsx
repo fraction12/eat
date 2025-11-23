@@ -1291,6 +1291,7 @@ export default function RecipesPage() {
         }}
         onCollectionSelect={selectedRecipe ? handleCollectionSelect : undefined}
         mode={selectedRecipe ? "select" : "manage"}
+        inventory={inventory}
       />
 
       <RecipeDetailModal
