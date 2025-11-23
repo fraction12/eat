@@ -130,7 +130,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             disabled={isSending}
             className="flex-1"
           >
-            Nevermind
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit}
@@ -143,7 +143,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                 Sending...
               </>
             ) : (
-              "Send to Dushyant"
+              "Send Feedback"
             )}
           </Button>
         </div>
