@@ -298,53 +298,58 @@ export function CollectionsModal({
                         {carouselIndex + 1} of {filteredRecipes.length}
                       </div>
 
-                      {/* Carousel */}
+                      {/* Carousel - Full Recipe Card */}
                       <div className="relative">
                         {/* Previous Button */}
                         {filteredRecipes.length > 1 && (
                           <button
                             onClick={() => setCarouselIndex((prev) => (prev - 1 + filteredRecipes.length) % filteredRecipes.length)}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-                            disabled={filteredRecipes.length === 1}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
                           >
                             <ChevronLeft className="h-6 w-6 text-gray-700" />
                           </button>
                         )}
 
-                        {/* Recipe Card */}
-                        <div className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden shadow-lg">
-                          <div className="relative h-64">
+                        {/* Recipe Detail Card */}
+                        <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+                          {/* Recipe Image */}
+                          <div className="relative h-80 bg-gray-200">
                             <img
-                              src={currentRecipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3C/svg%3E"}
+                              src={currentRecipe.recipe_image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/svg%3E"}
                               alt={currentRecipe.recipe_title}
                               className="w-full h-full object-cover"
                             />
+
+                            {/* Remove Button */}
+                            <button
+                              onClick={() => removeRecipeFromCollection(currentRecipe.id)}
+                              className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg hover:bg-red-50 text-red-600 transition-colors"
+                              title="Remove from collection"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
                           </div>
-                          <div className="p-4">
-                            <h4 className="font-bold text-gray-900 text-lg mb-2">
+
+                          {/* Recipe Content */}
+                          <div className="p-6">
+                            {/* Title and Source */}
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
                               {currentRecipe.recipe_title}
-                            </h4>
+                            </h2>
                             {currentRecipe.recipe_source && (
-                              <p className="text-sm text-gray-500 mb-4">{currentRecipe.recipe_source}</p>
+                              <p className="text-sm text-gray-600 mb-6">From {currentRecipe.recipe_source}</p>
                             )}
-                            <div className="flex gap-2">
-                              <a
-                                href={currentRecipe.recipe_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-semibold"
-                              >
-                                <ChefHat className="h-4 w-4" />
-                                Cook This Recipe
-                              </a>
-                              <button
-                                onClick={() => removeRecipeFromCollection(currentRecipe.id)}
-                                className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Remove from collection"
-                              >
-                                <Trash2 className="h-5 w-5" />
-                              </button>
-                            </div>
+
+                            {/* Cook Button */}
+                            <a
+                              href={currentRecipe.recipe_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
+                            >
+                              <ChefHat className="h-5 w-5" />
+                              View Full Recipe
+                            </a>
                           </div>
                         </div>
 
@@ -352,8 +357,7 @@ export function CollectionsModal({
                         {filteredRecipes.length > 1 && (
                           <button
                             onClick={() => setCarouselIndex((prev) => (prev + 1) % filteredRecipes.length)}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-                            disabled={filteredRecipes.length === 1}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
                           >
                             <ChevronRight className="h-6 w-6 text-gray-700" />
                           </button>
