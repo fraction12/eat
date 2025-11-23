@@ -108,60 +108,53 @@ export function RecipeDetailModal({
               </button>
             )}
 
-            {isUserRecipe ? (
-              <>
-                {/* Edit Button */}
-                {onEdit && (
-                  <button
-                    onClick={onEdit}
-                    className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                    title="Edit recipe"
-                  >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
-                )}
-                {/* Delete Button */}
-                {onDelete && (
-                  <button
-                    onClick={onDelete}
-                    className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-red-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-                    title="Delete recipe"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                {/* Favorite Button */}
-                {onFavorite && (
-                  <button
-                    onClick={onFavorite}
-                    className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 ${
-                      isFavorited
-                        ? "bg-white text-red-500 hover:scale-110"
-                        : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500 hover:scale-110"
-                    }`}
-                    title={isFavorited ? "Remove from favorites" : "Add to favorites"}
-                  >
-                    <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : ""}`} />
-                  </button>
-                )}
-                {/* Bookmark Button */}
-                {onSaveToCollection && (
-                  <button
-                    onClick={onSaveToCollection}
-                    className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
-                      isInCollection
-                        ? "bg-white text-blue-600 hover:scale-110"
-                        : "bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110"
-                    }`}
-                    title={isInCollection ? "Already in collection" : "Save to collection"}
-                  >
-                    <Bookmark className={`h-5 w-5 transition-transform ${isInCollection ? "fill-current" : ""}`} />
-                  </button>
-                )}
-              </>
+            {/* Favorite Button - Show for ALL recipes */}
+            {onFavorite && (
+              <button
+                onClick={onFavorite}
+                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 ${
+                  isFavorited
+                    ? "bg-white text-red-500 hover:scale-110"
+                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500 hover:scale-110"
+                }`}
+                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart className={`h-5 w-5 transition-transform ${isFavorited ? "fill-current" : ""}`} />
+              </button>
+            )}
+            {/* Bookmark Button - Show for ALL recipes */}
+            {onSaveToCollection && (
+              <button
+                onClick={onSaveToCollection}
+                className={`p-3 rounded-full shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+                  isInCollection
+                    ? "bg-white text-blue-600 hover:scale-110"
+                    : "bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110"
+                }`}
+                title={isInCollection ? "Already in collection" : "Save to collection"}
+              >
+                <Bookmark className={`h-5 w-5 transition-transform ${isInCollection ? "fill-current" : ""}`} />
+              </button>
+            )}
+            {/* Edit Button - Show for user recipes only */}
+            {isUserRecipe && onEdit && (
+              <button
+                onClick={onEdit}
+                className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                title="Edit recipe"
+              >
+                <Edit2 className="h-5 w-5" />
+              </button>
+            )}
+            {/* Delete Button - Show for user recipes only */}
+            {isUserRecipe && onDelete && (
+              <button
+                onClick={onDelete}
+                className="p-3 rounded-full shadow-lg bg-white/90 hover:bg-white text-gray-700 hover:text-red-600 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                title="Delete recipe"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
             )}
           </div>
         </div>
@@ -288,7 +281,7 @@ export function RecipeDetailModal({
               href={recipe.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
             >
               <ChefHat className="h-5 w-5" />
               View Full Recipe
