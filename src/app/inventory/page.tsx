@@ -553,7 +553,7 @@ export default function InventoryPage() {
                         value={manualCategory}
                         onChange={(e) => setManualCategory(e.target.value as Category)}
                         disabled={isAdding}
-                        className="w-full h-10 px-5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                        className="w-full h-10 px-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                       >
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
