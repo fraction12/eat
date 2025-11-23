@@ -32,6 +32,7 @@ type RecipeDetailModalProps = {
   onSaveToCollection?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  onCook?: () => void
   isFavorited?: boolean
   isInCollection?: boolean
   inventory?: InventoryItem[]
@@ -45,6 +46,7 @@ export function RecipeDetailModal({
   onSaveToCollection,
   onEdit,
   onDelete,
+  onCook,
   isFavorited = false,
   isInCollection = false,
   inventory = []
@@ -120,6 +122,16 @@ export function RecipeDetailModal({
               </>
             ) : (
               <>
+                {/* I Cooked This Button */}
+                {onCook && recipe.ingredients && recipe.ingredients.length > 0 && (
+                  <button
+                    onClick={onCook}
+                    className="p-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                    title="I cooked this recipe"
+                  >
+                    <ChefHat className="h-5 w-5" />
+                  </button>
+                )}
                 {/* Favorite Button */}
                 {onFavorite && (
                   <button
