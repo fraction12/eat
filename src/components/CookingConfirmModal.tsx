@@ -181,20 +181,20 @@ export function CookingConfirmModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-2">
-            <ChefHat className="h-8 w-8" />
-            <h2 className="text-2xl font-bold">Log Cooking</h2>
+            <ChefHat className="h-6 w-6 sm:h-8 sm:w-8" />
+            <h2 className="text-xl sm:text-2xl font-bold">Log Cooking</h2>
           </div>
-          <p className="text-white/90 text-lg font-semibold">{recipe.title}</p>
+          <p className="text-white/90 text-base sm:text-lg font-semibold truncate">{recipe.title}</p>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-200px)]">
           {isAnalyzing ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-12 w-12 animate-spin text-green-500 mb-4" />
@@ -241,19 +241,20 @@ export function CookingConfirmModal({
                             </div>
 
                             {/* Quantity Controls */}
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
                               {/* Current Quantity */}
-                              <div className="flex-1 text-center">
+                              <div className="flex-1 text-center w-full sm:w-auto">
                                 <div className="text-xs text-gray-500 mb-1">Current</div>
-                                <div className="font-bold text-lg text-gray-900">{match.currentQuantity}</div>
+                                <div className="font-bold text-base sm:text-lg text-gray-900">{match.currentQuantity}</div>
                                 <div className="text-xs text-gray-400">{match.unit || "items"}</div>
                               </div>
 
                               {/* Arrow */}
-                              <div className="text-gray-400">→</div>
+                              <div className="text-gray-400 hidden sm:block">→</div>
+                              <div className="text-gray-400 sm:hidden">↓</div>
 
                               {/* Deduction Control */}
-                              <div className="flex-1">
+                              <div className="flex-1 w-full sm:w-auto">
                                 <div className="text-xs text-gray-500 mb-1 text-center">Deduct</div>
                                 <div className="flex items-center justify-center gap-2">
                                   <button
@@ -278,7 +279,7 @@ export function CookingConfirmModal({
                                     }}
                                     min="0"
                                     max={match.currentQuantity}
-                                    className="w-20 text-center border border-gray-300 rounded-lg px-2 py-2 font-bold text-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    className="w-16 sm:w-20 text-center border border-gray-300 rounded-lg px-2 py-2 font-bold text-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                                   />
                                   <button
                                     onClick={() =>
@@ -300,13 +301,14 @@ export function CookingConfirmModal({
                               </div>
 
                               {/* Arrow */}
-                              <div className="text-gray-400">→</div>
+                              <div className="text-gray-400 hidden sm:block">→</div>
+                              <div className="text-gray-400 sm:hidden">↓</div>
 
                               {/* New Quantity */}
-                              <div className="flex-1 text-center">
+                              <div className="flex-1 text-center w-full sm:w-auto">
                                 <div className="text-xs text-gray-500 mb-1">After</div>
                                 <div
-                                  className={`font-bold text-lg ${
+                                  className={`font-bold text-base sm:text-lg ${
                                     newQuantity === 0 ? "text-red-600" : "text-gray-900"
                                   }`}
                                 >
@@ -344,21 +346,21 @@ export function CookingConfirmModal({
                     {unmatched.map((ingredient, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50"
+                        className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50"
                       >
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                          <span className="text-gray-700">{ingredient}</span>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0"></span>
+                          <span className="text-gray-700 text-sm truncate">{ingredient}</span>
                         </div>
                         {mappingIngredient === ingredient ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
                             <select
                               onChange={(e) => {
                                 if (e.target.value) {
                                   handleManualMapping(ingredient, e.target.value)
                                 }
                               }}
-                              className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="border border-gray-300 rounded px-2 sm:px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-initial min-w-0"
                               autoFocus
                             >
                               <option value="">Select inventory item...</option>
@@ -375,7 +377,7 @@ export function CookingConfirmModal({
                             </select>
                             <button
                               onClick={() => setMappingIngredient(null)}
-                              className="text-gray-400 hover:text-gray-600"
+                              className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -383,7 +385,7 @@ export function CookingConfirmModal({
                         ) : (
                           <button
                             onClick={() => setMappingIngredient(ingredient)}
-                            className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+                            className="flex items-center justify-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors w-full sm:w-auto flex-shrink-0"
                           >
                             <LinkIcon className="h-3 w-3" />
                             Map
@@ -409,24 +411,26 @@ export function CookingConfirmModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50 flex gap-3">
-          <Button onClick={onClose} variant="outline" className="flex-1" disabled={isConfirming}>
+        <div className="border-t border-gray-200 p-4 sm:p-6 bg-gray-50 flex gap-2 sm:gap-3">
+          <Button onClick={onClose} variant="outline" className="flex-1 text-sm sm:text-base" disabled={isConfirming}>
             Cancel
           </Button>
           <Button
             onClick={handleConfirm}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base"
             disabled={isAnalyzing || isConfirming}
           >
             {isConfirming ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Updating...
+                <span className="hidden sm:inline">Updating...</span>
+                <span className="sm:hidden">...</span>
               </>
             ) : (
               <>
                 <Check className="h-4 w-4 mr-2" />
-                Confirm & Update Inventory
+                <span className="hidden sm:inline">Confirm & Update Inventory</span>
+                <span className="sm:hidden">Confirm</span>
               </>
             )}
           </Button>
