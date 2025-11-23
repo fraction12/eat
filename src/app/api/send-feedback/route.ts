@@ -93,7 +93,7 @@ When: ${timestamp}
       subject: `[Eat] ${typeLabel}`,
       html: emailHtml,
       text: emailText,
-      reply_to: user?.email || undefined,
+      replyTo: user?.email || undefined,
     });
 
     if (error) {
