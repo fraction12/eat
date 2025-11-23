@@ -13,6 +13,7 @@ import { CollectionsModal } from "@/components/CollectionsModal"
 import { RecipeDetailModal } from "@/components/RecipeDetailModal"
 import { AddRecipeModal } from "@/components/AddRecipeModal"
 import { RecipePreviewModal } from "@/components/RecipePreviewModal"
+import { ConfirmModal } from "@/components/ConfirmModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/AuthProvider"
@@ -110,6 +111,7 @@ export default function RecipesPage() {
   const [showRecipePreviewModal, setShowRecipePreviewModal] = useState(false)
   const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<string | undefined>(undefined)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -148,7 +150,7 @@ export default function RecipesPage() {
         // Convert user recipes to RSSRecipe format
         const formattedRecipes = (data.recipes || []).map((recipe: any) => ({
           title: recipe.title,
-          link: recipe.source_url || recipe.id,
+          link: recipe.id,  // Always use database UUID for user recipes
           description: recipe.description || "",
           image: recipe.image_url || "",
           pubDate: recipe.created_at,
@@ -386,10 +388,6 @@ export default function RecipesPage() {
 
   const handleDeleteRecipe = async () => {
     if (!selectedRecipe) return
-
-    if (!confirm("Are you sure you want to delete this recipe? This action cannot be undone.")) {
-      return
-    }
 
     try {
       const response = await fetch(`/api/recipes/user?id=${selectedRecipe.link}`, {
@@ -1466,7 +1464,7 @@ export default function RecipesPage() {
           }
         }}
         onEdit={handleEditRecipe}
-        onDelete={handleDeleteRecipe}
+        onDelete={() => setShowDeleteConfirm(true)}
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
         isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
         inventory={inventory}
@@ -1488,6 +1486,17 @@ export default function RecipesPage() {
         recipe={scrapedRecipe}
         recipeId={editingRecipeId}
         onSave={handleSaveScrapedRecipe}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteRecipe}
+        title="Delete Recipe"
+        message="Are you sure you want to delete this recipe? This action cannot be undone."
+        confirmText="Delete"
+        confirmClassName="bg-red-600 hover:bg-red-700"
+        isDestructive={true}
       />
 
       <ToastContainer />
