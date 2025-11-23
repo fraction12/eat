@@ -445,48 +445,60 @@ export function CollectionsModal({
                             )}
 
                             {/* Ingredients */}
-                            {fullRecipe?.ingredients && fullRecipe.ingredients.length > 0 && (
-                              <div className="mb-6">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h3 className="text-xl font-bold text-gray-900">Ingredients</h3>
-                                  {matchCount > 0 && (
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
-                                      <Check className="h-4 w-4 text-green-600" />
-                                      <span className="text-sm font-semibold text-green-700">
-                                        You have {matchCount} of {totalIngredients}
-                                      </span>
+                            {fullRecipe?.ingredients && fullRecipe.ingredients.length > 0 && (() => {
+                              const ingredientsYouHave = fullRecipe.ingredients.filter(ing => hasIngredient(ing))
+                              const ingredientsYouNeed = fullRecipe.ingredients.filter(ing => !hasIngredient(ing))
+
+                              return (
+                                <div className="mb-6 space-y-4">
+                                  {/* You Have Section */}
+                                  {ingredientsYouHave.length > 0 && (
+                                    <div>
+                                      <h3 className="text-lg font-bold text-green-900 mb-2 flex items-center gap-2">
+                                        <Check className="h-5 w-5 text-green-600" />
+                                        YOU HAVE ({ingredientsYouHave.length})
+                                      </h3>
+                                      <ul className="space-y-2">
+                                        {ingredientsYouHave.map((ingredient, idx) => (
+                                          <li
+                                            key={idx}
+                                            className="flex items-start gap-3 p-2 rounded-lg bg-green-50 border border-green-200"
+                                          >
+                                            <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                            <span className="text-green-900 font-medium">
+                                              {ingredient}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* You Need Section */}
+                                  {ingredientsYouNeed.length > 0 && (
+                                    <div>
+                                      <h3 className="text-lg font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                        <span className="text-gray-400">○</span>
+                                        YOU NEED ({ingredientsYouNeed.length})
+                                      </h3>
+                                      <ul className="space-y-2">
+                                        {ingredientsYouNeed.map((ingredient, idx) => (
+                                          <li
+                                            key={idx}
+                                            className="flex items-start gap-3 p-2 rounded-lg bg-gray-50"
+                                          >
+                                            <span className="text-gray-400 mt-0.5 ml-0.5 flex-shrink-0">○</span>
+                                            <span className="text-gray-700">
+                                              {ingredient}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
                                     </div>
                                   )}
                                 </div>
-                                <ul className="space-y-2">
-                                  {fullRecipe.ingredients.map((ingredient, idx) => {
-                                    const userHasIt = hasIngredient(ingredient)
-                                    return (
-                                      <li
-                                        key={idx}
-                                        className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
-                                          userHasIt ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
-                                        }`}
-                                      >
-                                        {userHasIt ? (
-                                          <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                                        ) : (
-                                          <span className="text-gray-400 mt-0.5 ml-0.5 flex-shrink-0">○</span>
-                                        )}
-                                        <span className={`${userHasIt ? 'text-green-900 font-medium' : 'text-gray-700'}`}>
-                                          {ingredient}
-                                        </span>
-                                      </li>
-                                    )
-                                  })}
-                                </ul>
-                                {matchCount > 0 && matchCount < totalIngredients && (
-                                  <p className="text-sm text-gray-600 mt-3 italic">
-                                    You need {totalIngredients - matchCount} more ingredient{totalIngredients - matchCount !== 1 ? 's' : ''} to make this recipe
-                                  </p>
-                                )}
-                              </div>
-                            )}
+                              )
+                            })()}
 
                             {/* Instructions */}
                             {fullRecipe?.instructions && (
