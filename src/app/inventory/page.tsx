@@ -385,23 +385,23 @@ export default function InventoryPage() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
             <div className="text-sm text-gray-600 mb-1">Total Items</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.totalItems}</div>
+            <div className="text-xl font-bold text-gray-900">{stats.totalItems}</div>
           </div>
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
             <div className="text-sm text-gray-600 mb-1">Categories</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.categories}</div>
+            <div className="text-xl font-bold text-gray-900">{stats.categories}</div>
           </div>
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-500">
             <div className="text-sm text-gray-600 mb-1">Recently Added</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.recentItems}</div>
+            <div className="text-xl font-bold text-gray-900">{stats.recentItems}</div>
           </div>
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-red-500">
             <div className="text-sm text-gray-600 mb-1">Running Low</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.lowStock}</div>
+            <div className="text-xl font-bold text-gray-900">{stats.lowStock}</div>
           </div>
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
             <div className="text-sm text-gray-600 mb-1">Total Value</div>
-            <div className="text-3xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</div>
+            <div className="text-xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</div>
           </div>
         </div>
 
