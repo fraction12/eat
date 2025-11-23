@@ -373,9 +373,9 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
+        <div className="mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Kitchen Inventory</h1>
-          <p className="text-sm sm:text-base text-gray-600 px-4">
+          <p className="text-sm sm:text-base text-gray-600">
             <span className="hidden sm:inline">Track what you have • Find what you can make • Never forget what you bought</span>
             <span className="sm:hidden">Track, find, and cook with what you have</span>
           </p>
