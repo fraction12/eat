@@ -146,6 +146,10 @@ export default function InventoryPage() {
   const [localPrices, setLocalPrices] = useState<Record<string, number | string>>({})
   const [updatingPrices, setUpdatingPrices] = useState<Set<string>>(new Set())
 
+  // Local item name state for responsive UI
+  const [localNames, setLocalNames] = useState<Record<string, string>>({})
+  const [updatingNames, setUpdatingNames] = useState<Set<string>>(new Set())
+
   const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
   const toggleCategory = (category: Category) => {
@@ -864,6 +868,7 @@ export default function InventoryPage() {
                           const currentQty = localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1
                           const currentPrice = localPrices[item.id] !== undefined ? localPrices[item.id] : item.price
                           const totalPrice = Number(currentPrice) * Number(currentQty)
+                          const currentName = localNames[item.id] !== undefined ? localNames[item.id] : item.item
 
                           return (
                             <div
@@ -877,9 +882,91 @@ export default function InventoryPage() {
                                 <div className="space-y-2">
                                   {/* Item Name + Badges */}
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-semibold text-gray-900 text-base">
-                                      {item.item}
-                                    </h4>
+                                    <Input
+                                      type="text"
+                                      value={currentName}
+                                      onChange={(e) => {
+                                        setLocalNames(prev => ({ ...prev, [item.id]: e.target.value }))
+                                      }}
+                                      onFocus={(e) => e.target.select()}
+                                      onBlur={async (e) => {
+                                        if (!user) return
+
+                                        const newName = e.target.value.trim()
+
+                                        // Validate non-empty
+                                        if (!newName) {
+                                          showToast("error", "Item name cannot be empty")
+                                          setLocalNames(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          return
+                                        }
+
+                                        const originalName = item.item
+
+                                        if (newName === originalName) {
+                                          setLocalNames(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          return
+                                        }
+
+                                        setUpdatingNames(prev => new Set(prev).add(item.id))
+
+                                        const { error } = await supabase
+                                          .from("inventory")
+                                          .update({ item: newName })
+                                          .eq("id", item.id)
+                                          .eq("user_id", user.id)
+
+                                        setUpdatingNames(prev => {
+                                          const updated = new Set(prev)
+                                          updated.delete(item.id)
+                                          return updated
+                                        })
+
+                                        if (error) {
+                                          console.error("Error updating item name:", error)
+                                          showToast("error", `Failed to update name: ${error.message}`)
+                                          setLocalNames(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                        } else {
+                                          setLocalNames(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          await refetchItems()
+                                          showToast("success", "Item name updated")
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          e.currentTarget.blur()
+                                        }
+                                        if (e.key === 'Escape') {
+                                          setLocalNames(prev => {
+                                            const updated = { ...prev }
+                                            delete updated[item.id]
+                                            return updated
+                                          })
+                                          e.currentTarget.blur()
+                                        }
+                                      }}
+                                      disabled={updatingNames.has(item.id)}
+                                      className={`font-semibold text-gray-900 text-base h-auto px-2 py-1 border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                        updatingNames.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-transparent hover:bg-gray-50'
+                                      }`}
+                                      title="Edit item name"
+                                    />
                                     {isNew && (
                                       <span className="inline-flex items-center h-5 px-2 text-xs bg-green-100 text-green-700 rounded-full font-medium">
                                         NEW
