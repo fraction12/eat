@@ -1340,6 +1340,7 @@ export default function RecipesPage() {
         }}
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
         isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
+        inventory={inventory}
       />
 
       <ToastContainer />
