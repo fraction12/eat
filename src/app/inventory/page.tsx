@@ -718,12 +718,12 @@ export default function InventoryPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
-                        <Sparkles className="h-5 w-5" />
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-3">
+                      <h3 className="font-semibold text-purple-900 mb-1 flex items-center gap-2 text-sm">
+                        <Sparkles className="h-4 w-4" />
                         Tell me what you have
                       </h3>
-                      <p className="text-sm text-purple-700 mb-3">
+                      <p className="text-xs text-purple-700">
                         Try: "Add pantry staples" or "I have milk, eggs, and bread"
                       </p>
                     </div>
@@ -757,16 +757,6 @@ export default function InventoryPage() {
                           </>
                         )}
                       </Button>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
-                      <p className="font-semibold mb-1">Quick commands:</p>
-                      <ul className="space-y-0.5 ml-2">
-                        <li>• "Add pantry staples"</li>
-                        <li>• "Stock my fridge with dairy basics"</li>
-                        <li>• "I have chicken, rice, and vegetables"</li>
-                        <li>• "2 gallons of milk and 3 lbs chicken breast"</li>
-                      </ul>
                     </div>
                   </div>
                 )}
