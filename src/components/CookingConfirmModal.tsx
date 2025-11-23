@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChefHat, Loader2, Check, X, ChevronDown } from "lucide-react"
+import { ChefHat, Loader2, Check, X, Plus, Minus, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 type InventoryItem = {
   id: string
   item: string
   quantity: number
+  unit?: string
 }
 
 type IngredientMatch = {
@@ -17,7 +18,7 @@ type IngredientMatch = {
   currentQuantity?: number
   suggestedDeduction?: number
   unit?: string
-  confidence?: "high" | "medium" | "low"
+  confidence?: "high" | "medium" | "low" | "manual"
 }
 
 type Deduction = {
@@ -55,6 +56,7 @@ export function CookingConfirmModal({
   const [unmatched, setUnmatched] = useState<string[]>([])
   const [deductions, setDeductions] = useState<Map<string, number>>(new Map())
   const [isConfirming, setIsConfirming] = useState(false)
+  const [mappingIngredient, setMappingIngredient] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen && recipe && recipe.ingredients) {
@@ -103,10 +105,34 @@ export function CookingConfirmModal({
     }
   }
 
-  const updateDeduction = (inventoryId: string, amount: number) => {
+  const updateDeduction = (inventoryId: string, amount: number, maxAmount: number) => {
     const newDeductions = new Map(deductions)
-    newDeductions.set(inventoryId, amount)
+    const clampedAmount = Math.max(0, Math.min(maxAmount, amount))
+    newDeductions.set(inventoryId, clampedAmount)
     setDeductions(newDeductions)
+  }
+
+  const handleManualMapping = (recipeIngredient: string, inventoryItemId: string) => {
+    const inventoryItem = inventory.find((item) => item.id === inventoryItemId)
+    if (!inventoryItem) return
+
+    // Remove from unmatched
+    setUnmatched((prev) => prev.filter((ing) => ing !== recipeIngredient))
+
+    // Add to matches with manual confidence
+    const newMatch: IngredientMatch = {
+      recipeIngredient,
+      matchedInventoryId: inventoryItem.id,
+      matchedInventoryName: inventoryItem.item,
+      currentQuantity: inventoryItem.quantity,
+      suggestedDeduction: 1,
+      unit: inventoryItem.unit,
+      confidence: "manual",
+    }
+
+    setMatches((prev) => [...prev, newMatch])
+    setDeductions((prev) => new Map(prev).set(inventoryItem.id, 1))
+    setMappingIngredient(null)
   }
 
   const handleConfirm = async () => {
@@ -155,7 +181,7 @@ export function CookingConfirmModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -194,56 +220,108 @@ export function CookingConfirmModal({
                       return (
                         <div
                           key={idx}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-all"
+                          className={`border rounded-lg p-4 hover:border-green-300 transition-all ${
+                            match.confidence === "manual" ? "border-blue-300 bg-blue-50/30" : "border-gray-200"
+                          }`}
                         >
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
+                          <div className="space-y-3">
+                            {/* Recipe Ingredient & Match Info */}
+                            <div>
                               <p className="font-medium text-gray-900">{match.recipeIngredient}</p>
-                              <p className="text-sm text-gray-500">
-                                Matched: <span className="font-semibold">{match.matchedInventoryName}</span>
-                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-sm text-gray-500">
+                                  Matched: <span className="font-semibold">{match.matchedInventoryName}</span>
+                                </p>
+                                {match.confidence === "manual" && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                    Manually Mapped
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-4">
                               {/* Current Quantity */}
-                              <div className="text-sm text-gray-600">
-                                <span className="font-medium">Current:</span>{" "}
-                                <span className="font-bold text-gray-900">{match.currentQuantity}</span>
+                              <div className="flex-1 text-center">
+                                <div className="text-xs text-gray-500 mb-1">Current</div>
+                                <div className="font-bold text-lg text-gray-900">{match.currentQuantity}</div>
+                                <div className="text-xs text-gray-400">{match.unit || "items"}</div>
                               </div>
 
                               {/* Arrow */}
-                              <span className="text-gray-400">→</span>
+                              <div className="text-gray-400">→</div>
 
-                              {/* Deduction Dropdown */}
-                              <div className="relative">
-                                <select
-                                  value={currentDeduction}
-                                  onChange={(e) =>
-                                    updateDeduction(match.matchedInventoryId!, parseInt(e.target.value))
-                                  }
-                                  className="appearance-none bg-white border-2 border-gray-300 rounded-lg px-3 py-2 pr-8 font-bold text-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer hover:border-green-400 transition-all"
-                                >
-                                  {Array.from({ length: match.currentQuantity + 1 }, (_, i) => i).map((num) => (
-                                    <option key={num} value={num}>
-                                      Deduct {num}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                              {/* Deduction Control */}
+                              <div className="flex-1">
+                                <div className="text-xs text-gray-500 mb-1 text-center">Deduct</div>
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() =>
+                                      updateDeduction(
+                                        match.matchedInventoryId!,
+                                        currentDeduction - 1,
+                                        match.currentQuantity!
+                                      )
+                                    }
+                                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={currentDeduction <= 0}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    value={currentDeduction}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value) || 0
+                                      updateDeduction(match.matchedInventoryId!, value, match.currentQuantity!)
+                                    }}
+                                    min="0"
+                                    max={match.currentQuantity}
+                                    className="w-20 text-center border border-gray-300 rounded-lg px-2 py-2 font-bold text-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      updateDeduction(
+                                        match.matchedInventoryId!,
+                                        currentDeduction + 1,
+                                        match.currentQuantity!
+                                      )
+                                    }
+                                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={currentDeduction >= match.currentQuantity}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <div className="text-xs text-gray-400 text-center mt-1">
+                                  {match.unit || "items"}
+                                </div>
                               </div>
 
                               {/* Arrow */}
-                              <span className="text-gray-400">→</span>
+                              <div className="text-gray-400">→</div>
 
                               {/* New Quantity */}
-                              <div className="text-sm min-w-[80px]">
-                                <span className="font-medium text-gray-600">After:</span>{" "}
-                                <span className={`font-bold ${newQuantity === 0 ? "text-red-600" : "text-gray-900"}`}>
+                              <div className="flex-1 text-center">
+                                <div className="text-xs text-gray-500 mb-1">After</div>
+                                <div
+                                  className={`font-bold text-lg ${
+                                    newQuantity === 0 ? "text-red-600" : "text-gray-900"
+                                  }`}
+                                >
                                   {newQuantity}
-                                  {newQuantity === 0 && " (removed)"}
-                                </span>
+                                </div>
+                                <div className="text-xs text-gray-400">{match.unit || "items"}</div>
                               </div>
                             </div>
+
+                            {/* Warning for deletion */}
+                            {newQuantity === 0 && (
+                              <div className="text-xs text-red-600 font-medium bg-red-50 border border-red-200 rounded px-3 py-2">
+                                ⚠️ This item will be removed from your inventory
+                              </div>
+                            )}
                           </div>
                         </div>
                       )
@@ -252,22 +330,67 @@ export function CookingConfirmModal({
                 </div>
               )}
 
-              {/* Unmatched Ingredients */}
+              {/* Unmatched Ingredients - Now with Manual Mapping */}
               {unmatched.length > 0 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
                     <X className="h-5 w-5 text-gray-400" />
                     Not in Your Inventory ({unmatched.length})
                   </h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <ul className="space-y-2">
-                      {unmatched.map((ingredient, idx) => (
-                        <li key={idx} className="text-gray-600 flex items-center gap-2">
+                  <p className="text-sm text-gray-500 mb-3">
+                    Map these ingredients to your inventory if the AI missed them:
+                  </p>
+                  <div className="space-y-2">
+                    {unmatched.map((ingredient, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                          {ingredient}
-                        </li>
-                      ))}
-                    </ul>
+                          <span className="text-gray-700">{ingredient}</span>
+                        </div>
+                        {mappingIngredient === ingredient ? (
+                          <div className="flex items-center gap-2">
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleManualMapping(ingredient, e.target.value)
+                                }
+                              }}
+                              className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              autoFocus
+                            >
+                              <option value="">Select inventory item...</option>
+                              {inventory
+                                .filter(
+                                  (item) =>
+                                    !matches.some((m) => m.matchedInventoryId === item.id)
+                                )
+                                .map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.item} (Qty: {item.quantity} {item.unit || "items"})
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              onClick={() => setMappingIngredient(null)}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setMappingIngredient(ingredient)}
+                            className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            Map
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -276,7 +399,9 @@ export function CookingConfirmModal({
               {matches.length === 0 && !isAnalyzing && (
                 <div className="text-center py-8">
                   <p className="text-gray-500 text-lg">No ingredients matched your inventory</p>
-                  <p className="text-gray-400 text-sm mt-2">You can still log this cook without deductions</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Try manually mapping ingredients above, or log without deductions
+                  </p>
                 </div>
               )}
             </>

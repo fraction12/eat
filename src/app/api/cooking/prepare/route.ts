@@ -12,6 +12,7 @@ type InventoryItem = {
   id: string
   item: string
   quantity: number
+  unit?: string
 }
 
 type IngredientMatch = {

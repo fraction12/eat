@@ -1385,15 +1385,18 @@ export default function RecipesPage() {
                             >
                               <Bookmark className={`h-4 w-4 transition-transform ${isInCollection(recipe.link) ? "fill-current" : ""}`} />
                             </button>
-                            <a
-                              href={recipe.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedRecipe(recipe)
+                                setShowCookingConfirmModal(true)
+                              }}
                               className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 hover:shadow-md transition-all text-xs font-semibold h-8"
+                              title="I cooked this"
                             >
                               <ChefHat className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="hidden sm:inline truncate">Cook</span>
-                            </a>
+                              <span className="hidden sm:inline truncate">I Cooked This</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
