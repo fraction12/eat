@@ -11,9 +11,29 @@ import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
 import { CollectionsModal } from "@/components/CollectionsModal"
 import { RecipeDetailModal } from "@/components/RecipeDetailModal"
+import { AddRecipeModal } from "@/components/AddRecipeModal"
+import { RecipePreviewModal } from "@/components/RecipePreviewModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/AuthProvider"
+
+type ScrapedRecipe = {
+  title: string
+  description?: string
+  image?: string
+  ingredients?: string[]
+  instructions?: string
+  prepTime?: number
+  cookTime?: number
+  totalTime?: number
+  servings?: number
+  category?: string
+  cuisine?: string
+  author?: string
+  videoUrl?: string
+  sourceUrl?: string
+  sourceName?: string
+}
 
 type RSSRecipe = {
   title: string
@@ -83,6 +103,9 @@ export default function RecipesPage() {
   const [showRecipeDetail, setShowRecipeDetail] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState<RSSRecipe | null>(null)
   const [cookNowCarouselIndex, setCookNowCarouselIndex] = useState(0)
+  const [showAddRecipeModal, setShowAddRecipeModal] = useState(false)
+  const [showRecipePreviewModal, setShowRecipePreviewModal] = useState(false)
+  const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(null)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -264,6 +287,39 @@ export default function RecipesPage() {
         console.error("Failed to add favorite:", error)
         showToast("error", "Failed to add to favorites")
       }
+    }
+  }
+
+  const handleRecipeScraped = (recipe: ScrapedRecipe) => {
+    setScrapedRecipe(recipe)
+    setShowRecipePreviewModal(true)
+  }
+
+  const handleSaveScrapedRecipe = async (recipe: ScrapedRecipe, collectionId?: string) => {
+    try {
+      const response = await fetch("/api/recipes/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipe, collectionId }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to save recipe")
+      }
+
+      showToast("success", "Recipe saved successfully!")
+
+      // Refresh data
+      if (collectionId) {
+        await fetchCollectionRecipes()
+      }
+
+      // Reset state
+      setScrapedRecipe(null)
+      setShowRecipePreviewModal(false)
+    } catch (error) {
+      console.error("Error saving recipe:", error)
+      throw error
     }
   }
 
@@ -671,10 +727,15 @@ export default function RecipesPage() {
                 <span className="hidden sm:inline">Feeds ({feeds.length})</span>
                 <span className="sm:hidden">Feeds</span>
               </Button>
-              <Button onClick={() => setShowAddFeedModal(true)} size="lg" className="gap-2">
+              <Button onClick={() => setShowAddFeedModal(true)} size="lg" variant="outline" className="gap-2">
                 <Plus className="h-5 w-5" />
                 <span className="hidden sm:inline">Add Feed</span>
                 <span className="sm:hidden">Add</span>
+              </Button>
+              <Button onClick={() => setShowAddRecipeModal(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                <span className="hidden sm:inline">Add from URL</span>
+                <span className="sm:hidden">URL</span>
               </Button>
             </div>
           </div>
@@ -1317,6 +1378,22 @@ export default function RecipesPage() {
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
         isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
         inventory={inventory}
+      />
+
+      <AddRecipeModal
+        isOpen={showAddRecipeModal}
+        onClose={() => setShowAddRecipeModal(false)}
+        onRecipeScraped={handleRecipeScraped}
+      />
+
+      <RecipePreviewModal
+        isOpen={showRecipePreviewModal}
+        onClose={() => {
+          setShowRecipePreviewModal(false)
+          setScrapedRecipe(null)
+        }}
+        recipe={scrapedRecipe}
+        onSave={handleSaveScrapedRecipe}
       />
 
       <ToastContainer />
