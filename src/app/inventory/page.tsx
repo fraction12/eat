@@ -125,7 +125,6 @@ export default function InventoryPage() {
 
   // Manual entry state
   const [manualItem, setManualItem] = useState("")
-  const [manualPrice, setManualPrice] = useState("")
   const [manualQuantity, setManualQuantity] = useState("1")
   const [manualCategory, setManualCategory] = useState<Category>("pantry")
   const [manualUnit, setManualUnit] = useState("count")
@@ -142,15 +141,9 @@ export default function InventoryPage() {
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
   const [updatingQuantities, setUpdatingQuantities] = useState<Set<string>>(new Set())
 
-  // Local price state for responsive UI
-  const [localPrices, setLocalPrices] = useState<Record<string, number | string>>({})
-  const [updatingPrices, setUpdatingPrices] = useState<Set<string>>(new Set())
-
   // Local item name state for responsive UI
   const [localNames, setLocalNames] = useState<Record<string, string>>({})
   const [updatingNames, setUpdatingNames] = useState<Set<string>>(new Set())
-
-  const total = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity || 1), 0)
 
   const toggleCategory = (category: Category) => {
     setCollapsedCategories(prev => {
@@ -308,7 +301,6 @@ export default function InventoryPage() {
 
     setIsAdding(true)
 
-    const price = manualPrice ? parseFloat(manualPrice) : 0
     const quantity = manualQuantity ? parseFloat(manualQuantity) : 1
 
     // Save to Supabase using the same endpoint
@@ -318,7 +310,7 @@ export default function InventoryPage() {
       body: JSON.stringify({
         items: [{
           item: manualItem.trim(),
-          price,
+          price: 0,
           quantity,
           category: manualCategory,
           unit: manualUnit
@@ -339,7 +331,6 @@ export default function InventoryPage() {
 
     // Clear form
     setManualItem("")
-    setManualPrice("")
     setManualQuantity("1")
     setManualCategory("pantry")
     setManualUnit("count")
@@ -432,7 +423,6 @@ export default function InventoryPage() {
   // Calculate stats
   const stats = {
     totalItems: items.length,
-    totalValue: total,
     recentItems: items.filter(item => getDaysOld(item.created_at) <= 2).length,
     lowStock: items.filter(item => item.quantity <= 2).length,
     categories: Object.keys(itemsByCategory).length,
@@ -451,7 +441,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Quick Stats Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
             <div className="text-sm text-gray-600 mb-1">Total Items</div>
             <div className="text-xl font-bold text-gray-900">{stats.totalItems}</div>
@@ -467,10 +457,6 @@ export default function InventoryPage() {
           <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-red-500">
             <div className="text-sm text-gray-600 mb-1">Running Low</div>
             <div className="text-xl font-bold text-gray-900">{stats.lowStock}</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
-            <div className="text-sm text-gray-600 mb-1">Total Value</div>
-            <div className="text-xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</div>
           </div>
         </div>
 
@@ -681,26 +667,6 @@ export default function InventoryPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
-                        Price (optional)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
-                        <Input
-                          id="item-price"
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={manualPrice}
-                          onChange={(e) => setManualPrice(e.target.value)}
-                          disabled={isAdding}
-                          onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                          className="h-10 pl-8 text-sm"
-                        />
-                      </div>
-                    </div>
-
                     <Button
                       onClick={handleManualAdd}
                       disabled={isAdding || !manualItem.trim()}
@@ -866,8 +832,6 @@ export default function InventoryPage() {
                           const isNew = daysOld <= 2
                           const isLowStock = item.quantity <= 2
                           const currentQty = localQuantities[item.id] !== undefined ? localQuantities[item.id] : item.quantity ?? 1
-                          const currentPrice = localPrices[item.id] !== undefined ? localPrices[item.id] : item.price
-                          const totalPrice = Number(currentPrice) * Number(currentQty)
                           const currentName = localNames[item.id] !== undefined ? localNames[item.id] : item.item
 
                           return (
@@ -986,104 +950,6 @@ export default function InventoryPage() {
                                       <span className="font-normal text-gray-900">
                                         {currentQty} {item.unit || 'count'}
                                       </span>
-                                    </div>
-                                    <div className="text-gray-400">•</div>
-                                    <div className="relative inline-flex items-center">
-                                      <span className="text-gray-600 mr-0.5">$</span>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                        value={localPrices[item.id] !== undefined ? localPrices[item.id] : totalPrice.toFixed(2)}
-                                        onChange={(e) => {
-                                          const value = e.target.value
-                                          if (value === '') {
-                                            setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
-                                            return
-                                          }
-                                          const numValue = parseFloat(value)
-                                          if (!isNaN(numValue) && numValue >= 0) {
-                                            setLocalPrices(prev => ({ ...prev, [item.id]: numValue }))
-                                          }
-                                        }}
-                                        onFocus={(e) => e.target.select()}
-                                        onBlur={async (e) => {
-                                          if (!user) return
-
-                                          let newTotal = parseFloat(e.target.value)
-                                          if (isNaN(newTotal) || newTotal < 0) {
-                                            newTotal = 0
-                                          }
-
-                                          newTotal = Math.round(newTotal * 100) / 100
-                                          const originalTotal = totalPrice
-
-                                          if (newTotal === originalTotal) {
-                                            setLocalPrices(prev => {
-                                              const updated = { ...prev }
-                                              delete updated[item.id]
-                                              return updated
-                                            })
-                                            return
-                                          }
-
-                                          setUpdatingPrices(prev => new Set(prev).add(item.id))
-
-                                          // Calculate new unit price from total
-                                          const newUnitPrice = currentQty > 0 ? newTotal / currentQty : 0
-
-                                          const { error } = await supabase
-                                            .from("inventory")
-                                            .update({ price: newUnitPrice })
-                                            .eq("id", item.id)
-                                            .eq("user_id", user.id)
-
-                                          setUpdatingPrices(prev => {
-                                            const updated = new Set(prev)
-                                            updated.delete(item.id)
-                                            return updated
-                                          })
-
-                                          if (error) {
-                                            console.error("Error updating price:", error)
-                                            showToast("error", `Failed to update price: ${error.message}`)
-                                            setLocalPrices(prev => {
-                                              const updated = { ...prev }
-                                              delete updated[item.id]
-                                              return updated
-                                            })
-                                          } else {
-                                            setLocalPrices(prev => {
-                                              const updated = { ...prev }
-                                              delete updated[item.id]
-                                              return updated
-                                            })
-                                            await refetchItems()
-                                            showToast("success", "Price updated")
-                                          }
-                                        }}
-                                        onKeyDown={(e) => {
-                                          if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                                            e.preventDefault()
-                                          }
-                                          if (e.key === 'Enter') {
-                                            e.currentTarget.blur()
-                                          }
-                                          if ((e.key === 'Delete' || e.key === 'Backspace') &&
-                                              e.currentTarget.selectionStart === 0 &&
-                                              e.currentTarget.selectionEnd === e.currentTarget.value.length) {
-                                            e.preventDefault()
-                                            setLocalPrices(prev => ({ ...prev, [item.id]: '' }))
-                                          }
-                                        }}
-                                        disabled={updatingPrices.has(item.id)}
-                                        className={`w-24 h-8 px-2 text-sm font-normal text-center border border-gray-300 hover:border-gray-400 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                          updatingPrices.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
-                                        }`}
-                                        title="Edit total price"
-                                      />
-                                      <span className="ml-1 text-gray-600">total</span>
                                     </div>
                                     <div className="text-gray-400">•</div>
                                     <div className="inline-flex items-center gap-1.5">
