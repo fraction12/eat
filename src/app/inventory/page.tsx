@@ -440,7 +440,7 @@ export default function InventoryPage() {
                   }`}
                 >
                   <Scan className="inline-block mr-2 h-5 w-5" />
-                  Scan Receipt
+                  Scan Your Receipt
                 </button>
                 <button
                   onClick={() => setActiveTab('manual')}
@@ -451,7 +451,7 @@ export default function InventoryPage() {
                   }`}
                 >
                   <Plus className="inline-block mr-2 h-5 w-5" />
-                  Add Manually
+                  Add Items Manually
                 </button>
               </div>
 
@@ -553,7 +553,7 @@ export default function InventoryPage() {
                         value={manualCategory}
                         onChange={(e) => setManualCategory(e.target.value as Category)}
                         disabled={isAdding}
-                        className="w-full h-10 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                        className="w-full h-10 px-5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
                       >
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
