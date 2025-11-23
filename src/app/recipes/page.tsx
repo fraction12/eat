@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Loader2, Plus, ExternalLink, Trash2, Rss, Search, Check, AlertCircle,
-  Heart, Filter, ArrowUpDown, Sparkles, ChefHat, Clock, Users, Bookmark, FolderPlus
+  Heart, Filter, ArrowUpDown, Sparkles, ChefHat, Clock, Users, Bookmark, FolderPlus, ChevronLeft, ChevronRight
 } from "lucide-react"
 import { AddFeedModal } from "@/components/AddFeedModal"
 import { ManageFeedsModal } from "@/components/ManageFeedsModal"
@@ -82,6 +82,7 @@ export default function RecipesPage() {
   const [showCollectionsModal, setShowCollectionsModal] = useState(false)
   const [showRecipeDetail, setShowRecipeDetail] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState<RSSRecipe | null>(null)
+  const [cookNowCarouselIndex, setCookNowCarouselIndex] = useState(0)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -680,17 +681,39 @@ export default function RecipesPage() {
         {/* Cook Now - Hero Section */}
         {!isLoading && cookNowRecipes.length > 0 && (
           <div className="mb-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl p-6 sm:p-8 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <ChefHat className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold">Cook Now with What You Have!</h2>
-                <p className="text-white/90 text-sm sm:text-base">
-                  You can make {cookNowRecipes.length} recipe{cookNowRecipes.length !== 1 ? 's' : ''} with your current inventory
-                </p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <ChefHat className="h-8 w-8" />
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold">Cook Now with What You Have!</h2>
+                  <p className="text-white/90 text-sm sm:text-base">
+                    You can make {cookNowRecipes.length} recipe{cookNowRecipes.length !== 1 ? 's' : ''} with your current inventory
+                  </p>
+                </div>
               </div>
+              {/* Position Indicator */}
+              {cookNowRecipes.length > 4 && (
+                <div className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
+                  {cookNowCarouselIndex + 1}-{Math.min(cookNowCarouselIndex + 4, cookNowRecipes.length)} of {cookNowRecipes.length}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              {cookNowRecipes.slice(0, 4).map((item, idx) => {
+
+            {/* Carousel Container */}
+            <div className="relative">
+              {/* Previous Button */}
+              {cookNowRecipes.length > 4 && cookNowCarouselIndex > 0 && (
+                <button
+                  onClick={() => setCookNowCarouselIndex(Math.max(0, cookNowCarouselIndex - 4))}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-3 bg-white text-green-600 rounded-full shadow-lg hover:bg-white/90 transition-all"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+              )}
+
+              {/* Recipe Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {cookNowRecipes.slice(cookNowCarouselIndex, cookNowCarouselIndex + 4).map((item, idx) => {
                 const { recipe, matchCount } = item
                 const favorited = isFavorite(recipe.link)
                 const inCollection = isInCollection(recipe.link)
@@ -761,6 +784,17 @@ export default function RecipesPage() {
                   </div>
                 )
               })}
+              </div>
+
+              {/* Next Button */}
+              {cookNowRecipes.length > 4 && cookNowCarouselIndex + 4 < cookNowRecipes.length && (
+                <button
+                  onClick={() => setCookNowCarouselIndex(Math.min(cookNowRecipes.length - 4, cookNowCarouselIndex + 4))}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-3 bg-white text-green-600 rounded-full shadow-lg hover:bg-white/90 transition-all"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              )}
             </div>
           </div>
         )}
