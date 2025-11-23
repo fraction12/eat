@@ -839,128 +839,110 @@ export default function InventoryPage() {
                               key={item.id}
                               className="p-5 hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-transparent transition-all duration-200"
                             >
-                              {/* Grid Layout: Info Left | Controls Right */}
-                              <div className="grid grid-cols-[1fr,auto] gap-4 items-center">
+                              {/* Two-Row Compact Layout */}
+                              <div className="space-y-2">
+                                {/* Row 1: Item Name + Badges */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Input
+                                    type="text"
+                                    value={currentName}
+                                    onChange={(e) => {
+                                      setLocalNames(prev => ({ ...prev, [item.id]: e.target.value }))
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                    onBlur={async (e) => {
+                                      if (!user) return
 
-                                {/* LEFT: Item Information */}
-                                <div className="space-y-2">
-                                  {/* Item Name + Badges */}
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <Input
-                                      type="text"
-                                      value={currentName}
-                                      onChange={(e) => {
-                                        setLocalNames(prev => ({ ...prev, [item.id]: e.target.value }))
-                                      }}
-                                      onFocus={(e) => e.target.select()}
-                                      onBlur={async (e) => {
-                                        if (!user) return
+                                      const newName = e.target.value.trim()
 
-                                        const newName = e.target.value.trim()
-
-                                        // Validate non-empty
-                                        if (!newName) {
-                                          showToast("error", "Item name cannot be empty")
-                                          setLocalNames(prev => {
-                                            const updated = { ...prev }
-                                            delete updated[item.id]
-                                            return updated
-                                          })
-                                          return
-                                        }
-
-                                        const originalName = item.item
-
-                                        if (newName === originalName) {
-                                          setLocalNames(prev => {
-                                            const updated = { ...prev }
-                                            delete updated[item.id]
-                                            return updated
-                                          })
-                                          return
-                                        }
-
-                                        setUpdatingNames(prev => new Set(prev).add(item.id))
-
-                                        const { error } = await supabase
-                                          .from("inventory")
-                                          .update({ item: newName })
-                                          .eq("id", item.id)
-                                          .eq("user_id", user.id)
-
-                                        setUpdatingNames(prev => {
-                                          const updated = new Set(prev)
-                                          updated.delete(item.id)
+                                      // Validate non-empty
+                                      if (!newName) {
+                                        showToast("error", "Item name cannot be empty")
+                                        setLocalNames(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
                                           return updated
                                         })
+                                        return
+                                      }
 
-                                        if (error) {
-                                          console.error("Error updating item name:", error)
-                                          showToast("error", `Failed to update name: ${error.message}`)
-                                          setLocalNames(prev => {
-                                            const updated = { ...prev }
-                                            delete updated[item.id]
-                                            return updated
-                                          })
-                                        } else {
-                                          setLocalNames(prev => {
-                                            const updated = { ...prev }
-                                            delete updated[item.id]
-                                            return updated
-                                          })
-                                          await refetchItems()
-                                          showToast("success", "Item name updated")
-                                        }
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          e.currentTarget.blur()
-                                        }
-                                        if (e.key === 'Escape') {
-                                          setLocalNames(prev => {
-                                            const updated = { ...prev }
-                                            delete updated[item.id]
-                                            return updated
-                                          })
-                                          e.currentTarget.blur()
-                                        }
-                                      }}
-                                      disabled={updatingNames.has(item.id)}
-                                      className={`font-semibold text-gray-900 text-base h-auto px-2 py-1 border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                        updatingNames.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-transparent hover:bg-gray-50'
-                                      }`}
-                                      title="Edit item name"
-                                    />
-                                    {isNew && (
-                                      <span className="inline-flex items-center h-5 px-2 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                                        NEW
-                                      </span>
-                                    )}
-                                    {isLowStock && (
-                                      <span className="inline-flex items-center h-5 px-2 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
-                                        <AlertCircle className="h-3 w-3" />
-                                        Low
-                                      </span>
-                                    )}
-                                  </div>
+                                      const originalName = item.item
 
-                                  {/* Metadata Row */}
-                                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="font-normal text-gray-900">
-                                        {currentQty} {item.unit || 'count'}
-                                      </span>
-                                    </div>
-                                    <div className="text-gray-400">•</div>
-                                    <div className="inline-flex items-center gap-1.5">
-                                      <Clock className="h-4 w-4 text-gray-400" />
-                                      <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
-                                    </div>
-                                  </div>
+                                      if (newName === originalName) {
+                                        setLocalNames(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
+                                          return updated
+                                        })
+                                        return
+                                      }
+
+                                      setUpdatingNames(prev => new Set(prev).add(item.id))
+
+                                      const { error } = await supabase
+                                        .from("inventory")
+                                        .update({ item: newName })
+                                        .eq("id", item.id)
+                                        .eq("user_id", user.id)
+
+                                      setUpdatingNames(prev => {
+                                        const updated = new Set(prev)
+                                        updated.delete(item.id)
+                                        return updated
+                                      })
+
+                                      if (error) {
+                                        console.error("Error updating item name:", error)
+                                        showToast("error", `Failed to update name: ${error.message}`)
+                                        setLocalNames(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
+                                          return updated
+                                        })
+                                      } else {
+                                        setLocalNames(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
+                                          return updated
+                                        })
+                                        await refetchItems()
+                                        showToast("success", "Item name updated")
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur()
+                                      }
+                                      if (e.key === 'Escape') {
+                                        setLocalNames(prev => {
+                                          const updated = { ...prev }
+                                          delete updated[item.id]
+                                          return updated
+                                        })
+                                        e.currentTarget.blur()
+                                      }
+                                    }}
+                                    disabled={updatingNames.has(item.id)}
+                                    className={`font-semibold text-gray-900 text-base h-auto px-2 py-1 border border-transparent hover:border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                      updatingNames.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-transparent hover:bg-gray-50'
+                                    }`}
+                                    title="Edit item name"
+                                  />
+                                  {isNew && (
+                                    <span className="inline-flex items-center h-5 px-2 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                                      NEW
+                                    </span>
+                                  )}
+                                  {isLowStock && (
+                                    <span className="inline-flex items-center h-5 px-2 text-xs bg-yellow-100 text-yellow-700 rounded-full font-medium gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Low
+                                    </span>
+                                  )}
                                 </div>
 
-                                {/* RIGHT: Controls */}
-                                <div className="flex items-center gap-2">
+                                {/* Row 2: Category • Quantity+Unit • Date • Delete */}
+                                <div className="flex items-center gap-3 text-sm flex-wrap">
                                   {/* Category Dropdown */}
                                   <select
                                     value={categorizeItem(item)}
@@ -977,20 +959,10 @@ export default function InventoryPage() {
                                     <option value="condiments">🧂 Condiments</option>
                                   </select>
 
-                                  {/* Unit Dropdown */}
-                                  <select
-                                    value={item.unit || 'count'}
-                                    onChange={(e) => handleUnitChange(item.id, e.target.value)}
-                                    className="h-8 px-3 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
-                                    title="Change unit"
-                                  >
-                                    {unitOptions.map(opt => (
-                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                  </select>
+                                  <div className="text-gray-400">•</div>
 
-                                  {/* Quantity Input */}
-                                  <div className="relative">
+                                  {/* Quantity + Unit Group */}
+                                  <div className="flex items-center gap-1.5">
                                     <Input
                                       type="number"
                                       min="0.01"
@@ -1076,12 +1048,32 @@ export default function InventoryPage() {
                                         }
                                       }}
                                       disabled={updatingQuantities.has(item.id)}
-                                      className={`w-20 h-8 px-2 text-sm text-center border border-gray-300 hover:border-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                      className={`w-16 h-8 px-2 text-sm text-center border border-gray-300 hover:border-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
                                         updatingQuantities.has(item.id) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
                                       }`}
                                       title="Edit quantity"
                                     />
+                                    <select
+                                      value={item.unit || 'count'}
+                                      onChange={(e) => handleUnitChange(item.id, e.target.value)}
+                                      className="h-8 px-2 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors cursor-pointer"
+                                      title="Change unit"
+                                    >
+                                      {unitOptions.map(opt => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                      ))}
+                                    </select>
                                   </div>
+
+                                  <div className="text-gray-400">•</div>
+
+                                  {/* Date Info */}
+                                  <div className="inline-flex items-center gap-1.5 text-gray-600">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span>{daysOld === 0 ? 'Today' : daysOld === 1 ? 'Yesterday' : `${daysOld}d ago`}</span>
+                                  </div>
+
+                                  <div className="text-gray-400">•</div>
 
                                   {/* Delete Button */}
                                   <Button
