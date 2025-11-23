@@ -841,11 +841,10 @@ export default function RecipesPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 h-[280px]">
+                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 h-[220px]">
                   <div className="h-32 bg-white/20 rounded-lg animate-pulse mb-3"></div>
                   <div className="h-4 w-3/4 bg-white/20 rounded animate-pulse mb-2"></div>
-                  <div className="h-4 w-1/2 bg-white/20 rounded animate-pulse mb-3"></div>
-                  <div className="h-10 w-full bg-white/20 rounded-lg animate-pulse"></div>
+                  <div className="h-4 w-1/2 bg-white/20 rounded animate-pulse"></div>
                 </div>
               ))}
             </div>
@@ -893,7 +892,7 @@ export default function RecipesPage() {
                   <div
                     key={idx}
                     onClick={() => openRecipeDetail(recipe)}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group cursor-pointer h-[280px] flex flex-col"
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all group cursor-pointer h-[220px] flex flex-col"
                   >
                     <div className="relative mb-3">
                       <img
@@ -943,17 +942,6 @@ export default function RecipesPage() {
                     <h3 className="font-bold text-white line-clamp-2 mb-2 text-sm min-h-[2.5rem]">
                       {recipe.title}
                     </h3>
-                    <div className="mt-auto">
-                      <a
-                        href={recipe.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-white text-green-600 rounded-lg hover:bg-white/90 transition-colors text-sm font-semibold h-10"
-                      >
-                        <ChefHat className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">Cook This Now</span>
-                      </a>
-                    </div>
                   </div>
                 )
               })}
