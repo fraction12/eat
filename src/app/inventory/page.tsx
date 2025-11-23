@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import {
   Loader2, Trash2, Plus, Camera, Upload, Scan, Search, ChefHat,
   Apple, Milk, Beef, Croissant, Package, Snowflake, Droplet,
-  AlertCircle, Clock, ArrowRight, Filter, X, ChevronDown, ChevronUp
+  AlertCircle, Clock, ArrowRight, Filter, X, ChevronDown, ChevronUp, Sparkles
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import ReactWebcam from "react-webcam"
@@ -113,8 +113,12 @@ export default function InventoryPage() {
   const [file, setFile] = useState<File | null>(null)
   const [items, setItems] = useState<Item[]>([])
 
-  // Tab state: 'scan' or 'manual'
-  const [activeTab, setActiveTab] = useState<'scan' | 'manual'>('scan')
+  // Tab state: 'scan', 'manual', or 'ai'
+  const [activeTab, setActiveTab] = useState<'scan' | 'manual' | 'ai'>('scan')
+
+  // AI chat state
+  const [aiInput, setAiInput] = useState("")
+  const [aiProcessing, setAiProcessing] = useState(false)
 
   const [showCam, setShowCam] = useState(false)
   const webcamRef = useRef<ReactWebcam>(null)
@@ -339,6 +343,67 @@ export default function InventoryPage() {
     showToast("success", "Item added to inventory!")
   }
 
+  const handleAIAdd = async () => {
+    if (!aiInput.trim()) {
+      showToast("error", "Please enter what you have")
+      return
+    }
+
+    setAiProcessing(true)
+
+    try {
+      // Call AI parsing endpoint
+      const parseRes = await fetch("/api/ai-add-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userInput: aiInput.trim() }),
+      })
+
+      if (!parseRes.ok) {
+        const errText = await parseRes.text()
+        console.error("AI parse error:", parseRes.status, errText)
+        showToast("error", `AI processing failed (${parseRes.status})`)
+        setAiProcessing(false)
+        return
+      }
+
+      const { items: parsedItems } = await parseRes.json()
+
+      if (!parsedItems || parsedItems.length === 0) {
+        showToast("error", "Couldn't understand the items. Try being more specific.")
+        setAiProcessing(false)
+        return
+      }
+
+      // Save items to database
+      const saveRes = await fetch("/api/saveItems", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: parsedItems }),
+      })
+
+      if (!saveRes.ok) {
+        const errText = await saveRes.text()
+        console.error("Save route error:", saveRes.status, errText)
+        showToast("error", `Save failed (${saveRes.status})`)
+        setAiProcessing(false)
+        return
+      }
+
+      // Refresh list
+      await refetchItems()
+
+      // Clear input
+      setAiInput("")
+      setAiProcessing(false)
+      showToast("success", `Added ${parsedItems.length} item${parsedItems.length > 1 ? 's' : ''} to inventory!`)
+    } catch (error) {
+      console.error("AI add error:", error)
+      showToast("error", "Something went wrong. Please try again.")
+      setAiProcessing(false)
+    }
+  }
+
   // Filter and search items
   const filteredItems = items.filter(item => {
     // Search filter
@@ -429,29 +494,40 @@ export default function InventoryPage() {
           {/* Left: Add Items */}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-4">
-              {/* Same tabs and content as before */}
+              {/* Tabs */}
               <div className="flex border-b border-gray-200">
                 <button
                   onClick={() => setActiveTab('scan')}
-                  className={`flex-1 px-6 py-4 font-semibold transition-colors ${
+                  className={`flex-1 px-4 py-4 font-semibold transition-colors text-sm ${
                     activeTab === 'scan'
                       ? 'bg-green-500 text-white'
                       : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <Scan className="inline-block mr-2 h-5 w-5" />
-                  Scan Receipt
+                  <Scan className="inline-block mr-1 h-4 w-4" />
+                  Scan
                 </button>
                 <button
                   onClick={() => setActiveTab('manual')}
-                  className={`flex-1 px-6 py-4 font-semibold transition-colors ${
+                  className={`flex-1 px-4 py-4 font-semibold transition-colors text-sm ${
                     activeTab === 'manual'
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <Plus className="inline-block mr-2 h-5 w-5" />
-                  Add Manually
+                  <Plus className="inline-block mr-1 h-4 w-4" />
+                  Manual
+                </button>
+                <button
+                  onClick={() => setActiveTab('ai')}
+                  className={`flex-1 px-4 py-4 font-semibold transition-colors text-sm ${
+                    activeTab === 'ai'
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Sparkles className="inline-block mr-1 h-4 w-4" />
+                  AI Chat
                 </button>
               </div>
 
@@ -639,6 +715,59 @@ export default function InventoryPage() {
                         </>
                       )}
                     </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5" />
+                        Tell me what you have
+                      </h3>
+                      <p className="text-sm text-purple-700 mb-3">
+                        Try: "Add pantry staples" or "I have milk, eggs, and bread"
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Input
+                        type="text"
+                        placeholder="Type what's in your kitchen..."
+                        value={aiInput}
+                        onChange={(e) => setAiInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !aiProcessing && aiInput.trim() && handleAIAdd()}
+                        disabled={aiProcessing}
+                        className="h-12 text-sm"
+                      />
+
+                      <Button
+                        onClick={handleAIAdd}
+                        disabled={aiProcessing || !aiInput.trim()}
+                        className="w-full h-12 text-base font-semibold bg-purple-600 hover:bg-purple-700"
+                        size="lg"
+                      >
+                        {aiProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-5 w-5" />
+                            Add Items
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
+                      <p className="font-semibold mb-1">Quick commands:</p>
+                      <ul className="space-y-0.5 ml-2">
+                        <li>• "Add pantry staples"</li>
+                        <li>• "Stock my fridge with dairy basics"</li>
+                        <li>• "I have chicken, rice, and vegetables"</li>
+                        <li>• "2 gallons of milk and 3 lbs chicken breast"</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>
