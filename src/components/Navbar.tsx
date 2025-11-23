@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { Package, ChefHat, LogOut, Menu, X } from 'lucide-react';
+import { Package, ChefHat, LogOut, Menu, X, MessageSquare } from 'lucide-react';
+import { FeedbackModal } from '@/components/FeedbackModal';
 
 export function Navbar() {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   if (pathname?.startsWith('/auth')) {
     return null;
@@ -65,6 +67,13 @@ export function Navbar() {
               <span className="hidden lg:inline">Recipes</span>
             </Link>
             <button
+              onClick={() => setFeedbackModalOpen(true)}
+              className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            >
+              <MessageSquare className="h-5 w-5" />
+              <span className="hidden lg:inline">Feedback</span>
+            </button>
+            <button
               onClick={handleSignOut}
               className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold text-sm lg:text-base"
             >
@@ -115,6 +124,16 @@ export function Navbar() {
               Recipes
             </Link>
             <button
+              onClick={() => {
+                setFeedbackModalOpen(true);
+                closeMobileMenu();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            >
+              <MessageSquare className="h-5 w-5" />
+              Feedback
+            </button>
+            <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
             >
@@ -124,6 +143,12 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+      />
     </nav>
   );
 }

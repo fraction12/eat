@@ -30,6 +30,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-webcam": "^7.2.0",
+    "resend": "^6.5.2",
     "sharp": "^0.34.3",
     "tailwind-merge": "^3.3.1"
   },

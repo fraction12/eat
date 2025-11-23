@@ -7,7 +7,7 @@ Eat is a smart kitchen management app that helps you:
 - 📝 **Track items** with quantities, prices, categories, and units
 - 🍽️ **Discover recipes** from 15+ RSS feeds that match your available ingredients
 - ⭐ **Save favorites** and filter by source, category, or ingredient matches
-- 💰 **Monitor spending** and see the total value of your kitchen inventory
+- 💬 **Send feedback** directly from the app to help improve the experience
 
 ## Features
 
@@ -38,6 +38,7 @@ Eat is a smart kitchen management app that helps you:
 - Node.js 20+
 - Supabase account
 - OpenAI API key
+- Resend API key (optional, for feedback feature)
 
 ### Installation
 
@@ -58,7 +59,15 @@ Create a `.env.local` file with:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 OPENAI_API_KEY=your_openai_api_key
+
+# Feedback Feature (optional)
+RESEND_API_KEY=your_resend_api_key
+FEEDBACK_EMAIL=dushyantgarg3@gmail.com
 ```
+
+**Note**:
+- Get your Resend API key from [https://resend.com](https://resend.com) (free tier: 100 emails/day)
+- `FEEDBACK_EMAIL` is where user feedback will be sent (defaults to dushyantgarg3@gmail.com if not set)
 
 4. Run the development server:
 ```bash
