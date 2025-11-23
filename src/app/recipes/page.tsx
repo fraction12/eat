@@ -1011,21 +1011,15 @@ export default function RecipesPage() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">Recipe</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[15%]">Source</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[10%]">Items</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">Recipe</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                     <tr key={i} className="bg-white h-[76px]">
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="h-6 w-12 bg-gray-200 rounded-full animate-pulse mx-auto"></div>
-                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-14 h-14 bg-gray-200 rounded-lg animate-pulse"></div>
@@ -1034,6 +1028,12 @@ export default function RecipesPage() {
                             <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse"></div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <div className="h-6 w-12 bg-gray-200 rounded-full animate-pulse mx-auto"></div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
@@ -1065,14 +1065,14 @@ export default function RecipesPage() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">
+                      Recipe
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide hidden md:table-cell w-[15%]">
                       Source
                     </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide hidden lg:table-cell w-[10%]">
                       Items
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide w-[55%]">
-                      Recipe
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide w-[20%]">
                       Actions
@@ -1094,30 +1094,6 @@ export default function RecipesPage() {
                           canMake ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-transparent'
                         } hover:bg-orange-50/30 hover:shadow-sm`}
                       >
-                        {/* Source */}
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {recipe.source || "Unknown"}
-                          </div>
-                          {recipe.area && (
-                            <div className="text-xs text-gray-500 mt-0.5 truncate">{recipe.area}</div>
-                          )}
-                        </td>
-
-                        {/* Items */}
-                        <td className="px-4 py-3 text-center hidden lg:table-cell">
-                          {canMake ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full">
-                              <Check className="h-3.5 w-3.5" />
-                              <span className="text-xs font-bold">
-                                {matchCount}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">—</span>
-                          )}
-                        </td>
-
                         {/* Recipe Info */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -1151,6 +1127,30 @@ export default function RecipesPage() {
                               </div>
                             </div>
                           </div>
+                        </td>
+
+                        {/* Source */}
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {recipe.source || "Unknown"}
+                          </div>
+                          {recipe.area && (
+                            <div className="text-xs text-gray-500 mt-0.5 truncate">{recipe.area}</div>
+                          )}
+                        </td>
+
+                        {/* Items */}
+                        <td className="px-4 py-3 text-center hidden lg:table-cell">
+                          {canMake ? (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full">
+                              <Check className="h-3.5 w-3.5" />
+                              <span className="text-xs font-bold">
+                                {matchCount}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
                         </td>
 
                         {/* Actions */}
