@@ -14,6 +14,8 @@ import { RecipeDetailModal } from "@/components/RecipeDetailModal"
 import { AddRecipeModal } from "@/components/AddRecipeModal"
 import { RecipePreviewModal } from "@/components/RecipePreviewModal"
 import { ConfirmModal } from "@/components/ConfirmModal"
+import { CookingConfirmModal } from "@/components/CookingConfirmModal"
+import { CookingHistoryModal } from "@/components/CookingHistoryModal"
 import { ToastContainer, showToast } from "@/components/Toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/AuthProvider"
@@ -112,6 +114,8 @@ export default function RecipesPage() {
   const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<string | undefined>(undefined)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showCookingConfirmModal, setShowCookingConfirmModal] = useState(false)
+  const [showCookingHistoryModal, setShowCookingHistoryModal] = useState(false)
 
   // Fetch user's feeds and add default if none exist
   useEffect(() => {
@@ -408,6 +412,52 @@ export default function RecipesPage() {
       console.error("Error deleting recipe:", error)
       showToast("error", "Failed to delete recipe. Please try again.")
     }
+  }
+
+  const handleCookRecipe = () => {
+    if (!selectedRecipe) return
+    setShowRecipeDetail(false) // Close detail modal
+    setShowCookingConfirmModal(true) // Open cooking confirm modal
+  }
+
+  const handleConfirmCooking = async (deductions: any[]) => {
+    if (!selectedRecipe) return
+
+    try {
+      const response = await fetch("/api/cooking/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe: {
+            title: selectedRecipe.title,
+            url: selectedRecipe.link,
+            source: selectedRecipe.source || "Unknown",
+            image: selectedRecipe.image,
+          },
+          deductions,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to log cooking")
+      }
+
+      showToast("success", "Cooking logged! Inventory updated.")
+
+      // Refresh inventory
+      await fetchInventory()
+
+      // Reset state
+      setShowCookingConfirmModal(false)
+      setSelectedRecipe(null)
+    } catch (error) {
+      console.error("Error logging cooking:", error)
+      showToast("error", "Failed to log cooking. Please try again.")
+    }
+  }
+
+  const handleInventoryUpdate = async () => {
+    await fetchInventory()
   }
 
   const fetchFeeds = async () => {
@@ -806,6 +856,16 @@ export default function RecipesPage() {
                 <FolderPlus className="h-5 w-5" />
                 <span className="hidden sm:inline">My Collections</span>
                 <span className="sm:hidden">Collections</span>
+              </Button>
+              <Button
+                onClick={() => setShowCookingHistoryModal(true)}
+                size="lg"
+                variant="outline"
+                className="gap-2"
+              >
+                <ChefHat className="h-5 w-5" />
+                <span className="hidden sm:inline">Cooked</span>
+                <span className="sm:hidden">Cooked</span>
               </Button>
               <Button
                 onClick={() => setShowManageFeedsModal(true)}
@@ -1455,6 +1515,7 @@ export default function RecipesPage() {
         }}
         onEdit={handleEditRecipe}
         onDelete={() => setShowDeleteConfirm(true)}
+        onCook={handleCookRecipe}
         isFavorited={selectedRecipe ? isFavorite(selectedRecipe.link) : false}
         isInCollection={selectedRecipe ? isInCollection(selectedRecipe.link) : false}
         inventory={inventory}
@@ -1487,6 +1548,23 @@ export default function RecipesPage() {
         confirmText="Delete"
         confirmClassName="bg-red-600 hover:bg-red-700"
         isDestructive={true}
+      />
+
+      <CookingConfirmModal
+        isOpen={showCookingConfirmModal}
+        onClose={() => {
+          setShowCookingConfirmModal(false)
+          setSelectedRecipe(null)
+        }}
+        recipe={selectedRecipe}
+        inventory={inventory}
+        onConfirm={handleConfirmCooking}
+      />
+
+      <CookingHistoryModal
+        isOpen={showCookingHistoryModal}
+        onClose={() => setShowCookingHistoryModal(false)}
+        onInventoryUpdate={handleInventoryUpdate}
       />
 
       <ToastContainer />
