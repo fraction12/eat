@@ -880,7 +880,7 @@ export default function RecipesPage() {
                 <span className="hidden sm:inline">Add Feed</span>
                 <span className="sm:hidden">Add</span>
               </Button>
-              <Button onClick={() => setShowAddRecipeModal(true)} size="lg" className="gap-2 bg-orange-500 hover:bg-orange-600">
+              <Button onClick={() => setShowAddRecipeModal(true)} size="lg" className="gap-2 bg-green-500 hover:bg-green-600">
                 <Plus className="h-5 w-5" />
                 <span className="hidden sm:inline">Add from URL</span>
                 <span className="sm:hidden">URL</span>
@@ -1034,7 +1034,7 @@ export default function RecipesPage() {
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-orange-500"
+                className="pl-10 pr-4 py-6 text-lg rounded-xl border-2 border-gray-200 focus:border-green-500"
               />
             </div>
             {inventory.length > 0 && (
@@ -1062,7 +1062,7 @@ export default function RecipesPage() {
                     setSortBy(e.target.value as any)
                     setCurrentPage(1)
                   }}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
                   <option value="match">Most Items</option>
                   <option value="name">Name (A-Z)</option>
@@ -1083,7 +1083,7 @@ export default function RecipesPage() {
                     setFilterSource(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
                   <option value="all">All Sources ({availableSources.length})</option>
                   {availableSources.map((source) => (
@@ -1107,7 +1107,7 @@ export default function RecipesPage() {
                       setFilterCategory(e.target.value)
                       setCurrentPage(1)
                     }}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                   >
                     <option value="all">All Categories</option>
                     {availableCategories.map((category) => (
@@ -1142,7 +1142,7 @@ export default function RecipesPage() {
                     onClick={getRandomRecipe}
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 hover:from-orange-600 hover:to-pink-600"
+                    className="gap-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white border-0 hover:from-green-600 hover:to-green-700"
                     title="Get a random recipe"
                   >
                     <Sparkles className="h-4 w-4" />
@@ -1156,7 +1156,7 @@ export default function RecipesPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-medium text-gray-500">Active filters:</span>
                 {searchQuery && (
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                     Search: "{searchQuery}"
                   </span>
                 )}
@@ -1289,7 +1289,7 @@ export default function RecipesPage() {
                           idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                         } ${
                           canMake ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-transparent'
-                        } hover:bg-orange-50/30 hover:shadow-sm`}
+                        } hover:bg-green-50/30 hover:shadow-sm`}
                       >
                         {/* Recipe Info */}
                         <td className="px-4 py-3">
@@ -1391,7 +1391,7 @@ export default function RecipesPage() {
                                 setSelectedRecipe(recipe)
                                 setShowCookingConfirmModal(true)
                               }}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 hover:shadow-md transition-all text-xs font-semibold h-8"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 hover:shadow-md transition-all text-xs font-semibold h-8"
                               title="I cooked this"
                             >
                               <ChefHat className="h-3.5 w-3.5 flex-shrink-0" />
@@ -1408,12 +1408,12 @@ export default function RecipesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-orange-50/30">
+              <div className="px-6 py-4 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-green-50/30">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">
-                    Showing <span className="text-orange-600 font-bold">{(currentPage - 1) * recipesPerPage + 1}</span> to{" "}
-                    <span className="text-orange-600 font-bold">{Math.min(currentPage * recipesPerPage, total)}</span> of{" "}
-                    <span className="text-orange-600 font-bold">{total}</span> recipes
+                    Showing <span className="text-green-600 font-bold">{(currentPage - 1) * recipesPerPage + 1}</span> to{" "}
+                    <span className="text-green-600 font-bold">{Math.min(currentPage * recipesPerPage, total)}</span> of{" "}
+                    <span className="text-green-600 font-bold">{total}</span> recipes
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -1445,7 +1445,7 @@ export default function RecipesPage() {
                             size="sm"
                             onClick={() => setCurrentPage(pageNum)}
                             className={`w-8 h-8 p-0 text-xs ${
-                              currentPage === pageNum ? "bg-orange-500 hover:bg-orange-600" : ""
+                              currentPage === pageNum ? "bg-green-500 hover:bg-green-600" : ""
                             }`}
                           >
                             {pageNum}
