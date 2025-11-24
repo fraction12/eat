@@ -86,9 +86,9 @@ export function Auth() {
   }
 
   const exampleUrls = [
-    { label: '📱 Instagram', url: 'https://www.instagram.com/p/example/' },
-    { label: '🎵 TikTok', url: 'https://www.tiktok.com/@user/video/123' },
-    { label: '📰 NYT', url: 'https://cooking.nytimes.com/recipes/12345-pasta' },
+    { label: '📱 Instagram', url: 'https://www.instagram.com/nytcooking/p/DRaPJWJgTwB/?hl=en' },
+    { label: '🎵 TikTok', url: 'https://www.tiktok.com/@mealsandmunchies/video/7122225011259133227?lang=en' },
+    { label: '📰 NYT', url: 'https://cooking.nytimes.com/recipes/762489991-spinach-corn-dip' },
   ]
 
   if (emailSent) {
@@ -140,7 +140,7 @@ export function Auth() {
 
       {/* Main Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 
           {/* LEFT SIDE - Hero & Demo */}
           <div className="space-y-8">
@@ -240,11 +240,7 @@ export function Auth() {
           <div className="lg:sticky lg:top-20">
             <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-white/50">
               <div className="text-center mb-8">
-                <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4">
-                  🎉 FREE FOREVER
-                </div>
-                <h3 className="text-3xl font-black text-gray-900 mb-2">Get started</h3>
-                <p className="text-gray-600">No credit card. No BS.</p>
+                <h3 className="text-3xl font-black text-gray-900">Get started</h3>
               </div>
 
               <form onSubmit={handleMagicLink} className="space-y-4">
