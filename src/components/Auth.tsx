@@ -311,10 +311,9 @@ export function Auth() {
                   alt={scrapedRecipe.title}
                   className="w-full h-64 object-cover rounded-xl"
                   onError={(e) => {
-                    // Hide image if it fails to load (CORS or other issues)
-                    e.currentTarget.style.display = 'none'
+                    // Show a placeholder if image fails to load
+                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect fill="%23f3f4f6" width="800" height="400"/%3E%3Ctext fill="%239ca3af" font-family="system-ui" font-size="24" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3E🍽️ Recipe Image%3C/text%3E%3C/svg%3E'
                   }}
-                  crossOrigin="anonymous"
                 />
               )}
 
