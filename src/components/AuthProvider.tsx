@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { Auth } from "@/components/Auth"
@@ -22,12 +23,19 @@ export const useAuth = () => useContext(AuthContext)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // If not logged in and not on allowed paths, redirect to home
+      if (!session && pathname !== '/' && !pathname.startsWith('/auth')) {
+        router.push('/')
+      }
     })
 
     // Listen for changes on auth state (sign in, sign out, etc.)
@@ -36,14 +44,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // If user just signed out and not on allowed paths, redirect to home
+      if (!session && pathname !== '/' && !pathname.startsWith('/auth')) {
+        router.push('/')
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router, pathname])
 
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    router.push('/')
   }
 
   // Show loading state
