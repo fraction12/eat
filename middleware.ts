@@ -36,10 +36,10 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Redirect unauthenticated users to /auth/signin (except when already on /auth)
-  if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
+  // Redirect unauthenticated users to / (except when already on / or /auth)
+  if (!session && !req.nextUrl.pathname.startsWith('/auth') && req.nextUrl.pathname !== '/') {
     const url = req.nextUrl.clone()
-    url.pathname = '/auth/signin'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
