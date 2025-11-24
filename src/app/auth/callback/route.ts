@@ -28,10 +28,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   if (!code) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url));
+    return NextResponse.redirect(new URL('/', req.url));
   }
   await supabase.auth.exchangeCodeForSession(code)
 
-  // Redirect the user to the main scan page
-  return NextResponse.redirect(new URL('/scan', req.url))
+  // Redirect the user to the inventory page
+  return NextResponse.redirect(new URL('/inventory', req.url))
 }

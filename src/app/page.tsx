@@ -1,20 +1,9 @@
 // src/app/page.tsx
 export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation'
-import { createServerSupabase } from '@/utils/supabase-server'
 
 export default async function Home() {
-  const supabase = await createServerSupabase()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // If the user is not signed in, send them to /auth/signin
-  if (!session) {
-    redirect('/auth/signin')
-  }
-
-  // Otherwise send them to the inventory page
+  // Always redirect to inventory - AuthProvider will show Auth.tsx if not logged in
   redirect('/inventory')
   return null
 }
