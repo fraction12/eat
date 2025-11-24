@@ -129,40 +129,56 @@ export function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 relative overflow-hidden">
+      {/* Animated background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-10 left-10 text-9xl animate-pulse">🥗</div>
+        <div className="absolute top-40 right-20 text-8xl animate-bounce">🍕</div>
+        <div className="absolute bottom-20 left-1/4 text-7xl animate-pulse delay-100">🥘</div>
+        <div className="absolute bottom-40 right-1/4 text-9xl animate-bounce delay-200">🍜</div>
+      </div>
+
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-[1.2fr,1fr] gap-12 lg:gap-16 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
           {/* LEFT SIDE - Hero & Demo */}
           <div className="space-y-8">
             {/* Logo & Headline */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="text-5xl">🍳</span>
-                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">Eat</h1>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full border border-white/30">
+                <span className="text-4xl">🍳</span>
+                <h1 className="text-3xl font-black text-white">Eat</h1>
               </div>
 
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight">
                 Stop asking<br />
-                "what's for dinner?"
+                <span className="text-yellow-300">"what's for dinner?"</span>
               </h2>
 
-              <div className="space-y-2 text-lg text-gray-600">
-                <p>Scan your groceries.</p>
-                <p>Find recipes you can make.</p>
-                <p>Track what you cook.</p>
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
+                  <p className="text-white font-medium">📸 Scan groceries</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
+                  <p className="text-white font-medium">🍽️ Find recipes</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
+                  <p className="text-white font-medium">👨‍🍳 Track cooking</p>
+                </div>
               </div>
             </div>
 
             {/* Recipe URL Demo */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 border border-gray-100">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 lg:p-8 border-2 border-white/50">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Try it now:</h3>
+                  <div className="inline-block bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+                    ✨ TRY IT NOW
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Paste any recipe URL</h3>
                   <p className="text-sm text-gray-600">
-                    Found a recipe on Instagram? TikTok? Any website?<br />
-                    Paste the URL:
+                    Instagram? TikTok? NYT Cooking? We'll check if you can make it.
                   </p>
                 </div>
 
@@ -178,16 +194,16 @@ export function Auth() {
                       }
                     }}
                     disabled={isScrapingRecipe}
-                    className="h-12 text-base"
+                    className="h-14 text-base border-2 border-gray-300 focus:border-orange-500 rounded-xl"
                   />
                   <Button
                     onClick={handleScrapeRecipe}
                     disabled={isScrapingRecipe || !recipeUrl.trim()}
-                    className="h-12 px-6 bg-orange-600 hover:bg-orange-700 text-white font-semibold whitespace-nowrap"
+                    className="h-14 px-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base whitespace-nowrap rounded-xl shadow-lg hover:shadow-xl transition-all"
                   >
                     {isScrapingRecipe ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Checking...
                       </>
                     ) : (
@@ -203,13 +219,13 @@ export function Auth() {
                 )}
 
                 <div className="pt-2">
-                  <p className="text-xs text-gray-500 mb-2">Popular examples:</p>
+                  <p className="text-xs font-semibold text-gray-500 mb-2">QUICK TEST:</p>
                   <div className="flex flex-wrap gap-2">
                     {exampleUrls.map((example, idx) => (
                       <button
                         key={idx}
                         onClick={() => setRecipeUrl(example.url)}
-                        className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        className="text-sm px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 rounded-full font-medium transition-all shadow-sm hover:shadow border border-gray-200"
                       >
                         {example.label}
                       </button>
@@ -222,8 +238,14 @@ export function Auth() {
 
           {/* RIGHT SIDE - Sign Up */}
           <div className="lg:sticky lg:top-20">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Get started free</h3>
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-white/50">
+              <div className="text-center mb-8">
+                <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4">
+                  🎉 FREE FOREVER
+                </div>
+                <h3 className="text-3xl font-black text-gray-900 mb-2">Get started</h3>
+                <p className="text-gray-600">No credit card. No BS.</p>
+              </div>
 
               <form onSubmit={handleMagicLink} className="space-y-4">
                 <Input
@@ -233,21 +255,21 @@ export function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12 text-base"
+                  className="h-14 text-base border-2 border-gray-300 focus:border-purple-500 rounded-xl"
                 />
 
                 <Button
                   type="submit"
                   disabled={loading || !email.trim()}
-                  className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base"
+                  className="w-full h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Sending magic...
                     </>
                   ) : (
-                    'Send magic link →'
+                    'Send magic link ✨'
                   )}
                 </Button>
 
@@ -276,13 +298,13 @@ export function Auth() {
 
       {/* Recipe Result Modal */}
       {showRecipeModal && scrapedRecipe && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">{scrapedRecipe.title}</h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-purple-200">
+            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-5 flex items-center justify-between rounded-t-3xl">
+              <h3 className="text-2xl font-black text-white">{scrapedRecipe.title}</h3>
               <button
                 onClick={() => setShowRecipeModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-white/80 hover:text-white transition-colors bg-white/20 rounded-full p-2 hover:bg-white/30"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -297,33 +319,38 @@ export function Auth() {
                 />
               )}
 
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <p className="text-sm text-orange-900 font-medium">
-                  📸 To see if you can make this, scan your groceries
+              <div className="bg-gradient-to-r from-orange-100 to-pink-100 border-2 border-orange-300 rounded-2xl p-5">
+                <p className="text-base text-orange-900 font-bold">
+                  📸 Sign up and scan your groceries to see if you can make this!
                 </p>
               </div>
 
               {scrapedRecipe.ingredients && scrapedRecipe.ingredients.length > 0 && (
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                    Here's what this recipe needs:
+                  <h4 className="text-2xl font-black text-gray-900 mb-4">
+                    Ingredients needed:
                   </h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-3 bg-gray-50 rounded-2xl p-6">
                     {scrapedRecipe.ingredients.map((ingredient, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-orange-600 mt-1">•</span>
-                        <span className="text-gray-700">{ingredient}</span>
+                      <li key={idx} className="flex items-start gap-3">
+                        <span className="text-2xl">✓</span>
+                        <span className="text-gray-700 text-lg">{ingredient}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              <div className="border-t border-gray-200 pt-6">
-                <div className="bg-gradient-to-r from-green-50 to-orange-50 rounded-xl p-6 text-center space-y-4">
-                  <p className="text-lg font-semibold text-gray-900">
-                    🎉 Want to save this and track your kitchen?
-                  </p>
+              <div className="border-t-2 border-gray-200 pt-6">
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 text-center space-y-5">
+                  <div>
+                    <p className="text-2xl font-black text-white mb-2">
+                      Ready to cook smarter? 🎉
+                    </p>
+                    <p className="text-white/90 text-sm">
+                      Save this recipe and start tracking your kitchen
+                    </p>
+                  </div>
                   <form onSubmit={handleMagicLink} className="space-y-3">
                     <Input
                       type="email"
@@ -331,20 +358,20 @@ export function Auth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="h-12 text-base"
+                      className="h-14 text-base border-2 border-white/50 bg-white/90 rounded-xl"
                     />
                     <Button
                       type="submit"
                       disabled={loading || !email.trim()}
-                      className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                      className="w-full h-14 bg-white text-purple-600 hover:bg-gray-100 font-black text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Sending magic...
                         </>
                       ) : (
-                        'Sign up & save this recipe →'
+                        'Sign up & save recipe ✨'
                       )}
                     </Button>
                   </form>
