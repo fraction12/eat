@@ -86,9 +86,7 @@ export function Auth() {
   }
 
   const exampleUrls = [
-    { label: '📱 Instagram', url: 'https://www.instagram.com/nytcooking/p/DRaPJWJgTwB/?hl=en' },
-    { label: '🎵 TikTok', url: 'https://www.tiktok.com/@mealsandmunchies/video/7122225011259133227?lang=en' },
-    { label: '📰 NYT', url: 'https://cooking.nytimes.com/recipes/762489991-spinach-corn-dip' },
+    { label: '📰 NYT Recipe', url: 'https://cooking.nytimes.com/recipes/762489991-spinach-corn-dip' },
   ]
 
   if (emailSent) {
@@ -178,7 +176,7 @@ export function Auth() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Paste any recipe URL</h3>
                   <p className="text-sm text-gray-600">
-                    Instagram? TikTok? NYT Cooking? We'll check if you can make it.
+                    NYT Cooking, Bon Appétit, or any recipe site. We'll check if you can make it.
                   </p>
                 </div>
 
@@ -312,6 +310,11 @@ export function Auth() {
                   src={scrapedRecipe.image}
                   alt={scrapedRecipe.title}
                   className="w-full h-64 object-cover rounded-xl"
+                  onError={(e) => {
+                    // Hide image if it fails to load (CORS or other issues)
+                    e.currentTarget.style.display = 'none'
+                  }}
+                  crossOrigin="anonymous"
                 />
               )}
 
