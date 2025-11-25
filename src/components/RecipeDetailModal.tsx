@@ -275,18 +275,20 @@ export function RecipeDetailModal({
             </div>
           )}
 
-          {/* Cook Button */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <a
-              href={recipe.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
-            >
-              <ChefHat className="h-5 w-5" />
-              View Full Recipe
-            </a>
-          </div>
+          {/* View Full Recipe Button - Only show for non-user recipes */}
+          {!isUserRecipe && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <a
+                href={recipe.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
+              >
+                <ChefHat className="h-5 w-5" />
+                View Full Recipe
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
